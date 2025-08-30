@@ -2,24 +2,517 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Analysez vos remboursements mutuelles et découvrez si vous êtes gagnant ou perdant avec votre mutuelle">
-    <meta name="keywords" content="mutuelle, remboursement, analyse, santé, PDF">
-    <meta name="theme-color" content="#667eea">
     <title>Mutuelle Calculateur</title>
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Preload des ressources critiques -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js" as="script">
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" as="script">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin-bottom: 20px;
+            max-width: 1400px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .upload-zone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 60px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #f7fafc 0%, #edf2f7 100%);
+        }
+
+        .upload-zone:hover {
+            border-color: #667eea;
+            background: linear-gradient(45deg, #edf2f7 0%, #e2e8f0 100%);
+            transform: translateY(-2px);
+        }
+
+        .upload-zone.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #a0aec0;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+            margin: 5px;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            padding: 8px 16px;
+            font-size: 0.9em;
+            margin: 5px;
+        }
+
+        .btn-download:hover {
+            box-shadow: 0 8px 16px rgba(56, 178, 172, 0.3);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(66, 153, 225, 0.3);
+        }
+
+        .summary-card h3 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .summary-card .amount {
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+
+        .details-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .table-controls {
+            padding: 15px;
+            background: #f7fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-controls label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        th:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6b4190 100%);
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tbody tr:hover {
+            background: #f7fafc;
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .positive {
+            color: #38a169;
+        }
+
+        .negative {
+            color: #e53e3e;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #edf2f7;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .cotisation-form {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .year-section {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f7fafc;
+        }
+
+        .year-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .calculations {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .calc-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .privacy-notice {
+            background: #e6fffa;
+            color: #234e52;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #38b2ac;
+        }
+
+        .privacy-notice strong {
+            color: #1a202c;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            position: relative;
+            height: 600px;
+            min-width: 500px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-container canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4a5568;
+            margin: 0;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 500px;
+                min-width: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                padding: 15px;
+                height: 450px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+
+        .analytics-summary {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .analytics-summary h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .analytics-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .year-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .year-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .download-status {
+            background: #e6fffa;
+            color: #234e52;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #38b2ac;
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
             <div class="header">
                 <h1>🏥 Mutuelle Calculateur</h1>
-                <p>Analysez vos relevés de mutuelle en toute confidentialité</p>
+                <p>Calculez et analysez vos remboursements de mutuelle en toute confidentialité</p>
             </div>
 
             <div id="confidentialityNotice" class="privacy-notice">
@@ -27,9 +520,9 @@
             </div>
 
             <div id="descriptionNotice" class="privacy-notice" style="background: #e8f5e8; color: #2d5016; border-left-color: #68d391;">
-                <strong>🎯 À quoi sert cet analyseur ?</strong>
+                <strong>🎯 À quoi sert ce calculateur ?</strong>
                 <div style="margin-top: 10px;">
-                    Cette application analyse vos relevés de mutuelle et calcule automatiquement si votre mutuelle vous fait gagner ou perdre de l'argent. Elle compare vos cotisations annuelles avec les remboursements reçus pour vous donner un verdict clair : <strong>êtes-vous gagnant ou perdant avec votre mutuelle ?</strong>
+                    Cette application calcule et analyse vos relevés de mutuelle pour déterminer automatiquement si votre mutuelle vous fait gagner ou perdre de l'argent. Elle compare vos cotisations annuelles avec les remboursements reçus pour vous donner un verdict clair : <strong>Êtes-vous gagnant ou perdant avec votre mutuelle ?</strong>
                 </div>
                 <div style="margin-top: 10px;">
                     L'outil génère des graphiques détaillés, calcule vos déficits ou bénéfices par année, et vous aide à prendre des décisions éclairées sur votre couverture santé.
@@ -46,12 +539,13 @@
             </div>
 
             <div id="uploadSection" class="upload-section">
-                <div class="upload-zone">
+                <div class="upload-zone" onclick="document.getElementById('fileInput').click()" 
+                     ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
                     <div class="upload-icon">📄</div>
                     <div class="upload-text">Glissez votre relevé de mutuelle ici</div>
                     <div class="upload-subtext">ou cliquez pour sélectionner un fichier PDF</div>
                 </div>
-                <input type="file" id="fileInput" accept=".pdf">
+                <input type="file" id="fileInput" accept=".pdf" onchange="handleFileSelect(event)">
                 <button class="btn" onclick="document.getElementById('fileInput').click()">
                     Choisir un fichier
                 </button>
@@ -64,9 +558,9 @@
 
             <div id="resultsSection" class="results-section">
                 <div class="tabs">
-                    <button class="tab active" onclick="TabManager.switch('remboursements')">Remboursements</button>
-                    <button class="tab" onclick="TabManager.switch('cotisations')">Cotisations</button>
-                    <button class="tab" onclick="TabManager.switch('analytics')">Synthèse</button>
+                    <button class="tab active" onclick="switchTab('remboursements')">Remboursements</button>
+                    <button class="tab" onclick="switchTab('cotisations')">Cotisations</button>
+                    <button class="tab" onclick="switchTab('analytics')">Synthèse</button>
                 </div>
 
                 <div id="remboursementsTab" class="tab-content active">
@@ -76,80 +570,6 @@
                     <div class="details-table">
                         <div class="table-controls">
                             <label>Trier par date :</label>
-                            <button class="btn btn-small" onclick="TableSorter.sort('asc')">↑ Croissant</button>
-                            <button class="btn btn-small" onclick="TableSorter.sort('desc')">↓ Décroissant</button>
-                        </div>
-                        <table id="detailsTable">
-                            <thead>
-                                <tr>
-                                    <th onclick="TableSorter.sort('date')">Date</th>
-                                    <th>Sécurité Sociale</th>
-                                    <th>Mutuelle (MNT)</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Details will be inserted here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="cotisationsTab" class="tab-content">
-                    <div id="cotisationsContent">
-                        <!-- Cotisations form will be inserted here -->
-                    </div>
-                </div>
-
-                <div id="analyticsTab" class="tab-content">
-                    <div id="analyticsContent">
-                        <!-- Analytics will be inserted here -->
-                    </div>
-                </div>
-            </div>
-
-            <div id="downloadStatus" class="download-status">
-                PDF généré avec succès !
-            </div>
-        </div>
-        
-        <footer>
-            <div style="color: rgba(255,255,255,0.9); font-size: 14px;">
-                <a href="pages/mentions.html">Mentions légales</a>
-                <span style="color: rgba(255,255,255,0.5);">|</span>
-                <a href="pages/confidentialite.html">Confidentialité</a>
-                <span style="color: rgba(255,255,255,0.5);">|</span>
-                <a href="pages/cgu.html">CGU</a>
-                <span style="color: rgba(255,255,255,0.5);">|</span>
-                <a href="pages/contact.html">Contact</a>
-            </div>
-        </footer>
-    </div>
-
-    <!-- Scripts externes -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
-    <!-- Script principal -->
-    <script src="js/app.js"></script>
-    
-    <!-- Enregistrement du Service Worker pour PWA -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('Service Worker enregistré:', registration);
-                    })
-                    .catch(error => {
-                        console.log('Erreur Service Worker:', error);
-                    });
-            });
-        }
-    </script>
-</body>
-</html> par date :</label>
                             <button class="btn btn-small" onclick="sortTable('asc')">↑ Croissant</button>
                             <button class="btn btn-small" onclick="sortTable('desc')">↓ Décroissant</button>
                         </div>
@@ -1014,7 +1434,7 @@
 
                 // Page de titre
                 pdf.setFontSize(20);
-                pdf.text('Rapport d\'Analyse', pdfWidth / 2, yPos, { align: 'center' });
+                pdf.text('Rapport de Calcul', pdfWidth / 2, yPos, { align: 'center' });
                 yPos += 15;
                 pdf.text('Remboursements de Mutuelle', pdfWidth / 2, yPos, { align: 'center' });
                 yPos += 20;
@@ -1171,7 +1591,7 @@
                 }
 
                 // Télécharger le PDF complet
-                pdf.save('rapport-analyse-mutuelle.pdf');
+                pdf.save('rapport-calcul-mutuelle.pdf');
                 showDownloadSuccess();
 
             } catch (error) {
