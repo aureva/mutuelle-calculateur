@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Analysez vos remboursements mutuelles et découvrez si vous êtes gagnant ou perdant avec votre mutuelle">
+    <meta name="keywords" content="mutuelle, remboursement, analyse, santé, PDF">
+    <meta name="theme-color" content="#667eea">
+    <title>Mutuelle Calculateur</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Preload des ressources critiques -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" as="script">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>🏥 Mutuelle Calculateur</h1>
+                <p>Analysez vos relevés de mutuelle en toute confidentialité</p>
+            </div>
+
+            <div id="confidentialityNotice" class="privacy-notice">
+                <strong>🔒 Confidentialité garantie :</strong> Vos données sont traitées localement dans votre navigateur. Aucune information n'est envoyée sur internet.
+            </div>
+
+            <div id="descriptionNotice" class="privacy-notice" style="background: #e8f5e8; color: #2d5016; border-left-color: #68d391;">
+                <strong>🎯 À quoi sert cet analyseur ?</strong>
+                <div style="margin-top: 10px;">
+                    Cette application analyse vos relevés de mutuelle et calcule automatiquement si votre mutuelle vous fait gagner ou perdre de l'argent. Elle compare vos cotisations annuelles avec les remboursements reçus pour vous donner un verdict clair : <strong>êtes-vous gagnant ou perdant avec votre mutuelle ?</strong>
+                </div>
+                <div style="margin-top: 10px;">
+                    L'outil génère des graphiques détaillés, calcule vos déficits ou bénéfices par année, et vous aide à prendre des décisions éclairées sur votre couverture santé.
+                </div>
+            </div>
+
+            <div id="instructionsNotice" class="privacy-notice" style="background: #fff3cd; color: #856404; border-left-color: #ffc107;">
+                <strong>📋 Mode d'emploi :</strong>
+                <div style="margin-top: 10px;">
+                    <div><strong>Étape 1 :</strong> Connectez-vous sur votre espace mutuelle</div>
+                    <div style="margin-top: 5px;"><strong>Étape 2 :</strong> Téléchargez tous vos remboursements et prestations versées directement aux professionnels de santé</div>
+                    <div style="margin-top: 5px;"><strong>Étape 3 :</strong> Glissez votre relevé mutuelle ci-dessous</div>
+                </div>
+            </div>
+
+            <div id="uploadSection" class="upload-section">
+                <div class="upload-zone">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Glissez votre relevé de mutuelle ici</div>
+                    <div class="upload-subtext">ou cliquez pour sélectionner un fichier PDF</div>
+                </div>
+                <input type="file" id="fileInput" accept=".pdf">
+                <button class="btn" onclick="document.getElementById('fileInput').click()">
+                    Choisir un fichier
+                </button>
+            </div>
+
+            <div id="loadingSection" class="loading">
+                <div class="spinner"></div>
+                <p>Analyse du document en cours...</p>
+            </div>
+
+            <div id="resultsSection" class="results-section">
+                <div class="tabs">
+                    <button class="tab active" onclick="TabManager.switch('remboursements')">Remboursements</button>
+                    <button class="tab" onclick="TabManager.switch('cotisations')">Cotisations</button>
+                    <button class="tab" onclick="TabManager.switch('analytics')">Synthèse</button>
+                </div>
+
+                <div id="remboursementsTab" class="tab-content active">
+                    <div class="privacy-notice" style="margin-bottom: 20px;">
+                        <strong>ℹ️ Information importante :</strong> Les remboursements incluent aussi les prestations payées aux Professionnels de Santé si elles sont présentes sur le document fourni.
+                    </div>
+                    <div class="details-table">
+                        <div class="table-controls">
+                            <label>Trier par date :</label>
+                            <button class="btn btn-small" onclick="TableSorter.sort('asc')">↑ Croissant</button>
+                            <button class="btn btn-small" onclick="TableSorter.sort('desc')">↓ Décroissant</button>
+                        </div>
+                        <table id="detailsTable">
+                            <thead>
+                                <tr>
+                                    <th onclick="TableSorter.sort('date')">Date</th>
+                                    <th>Sécurité Sociale</th>
+                                    <th>Mutuelle (MNT)</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Details will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="cotisationsTab" class="tab-content">
+                    <div id="cotisationsContent">
+                        <!-- Cotisations form will be inserted here -->
+                    </div>
+                </div>
+
+                <div id="analyticsTab" class="tab-content">
+                    <div id="analyticsContent">
+                        <!-- Analytics will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="downloadStatus" class="download-status">
+                PDF généré avec succès !
+            </div>
+        </div>
+        
+        <footer>
+            <div style="color: rgba(255,255,255,0.9); font-size: 14px;">
+                <a href="pages/mentions.html">Mentions légales</a>
+                <span style="color: rgba(255,255,255,0.5);">|</span>
+                <a href="pages/confidentialite.html">Confidentialité</a>
+                <span style="color: rgba(255,255,255,0.5);">|</span>
+                <a href="pages/cgu.html">CGU</a>
+                <span style="color: rgba(255,255,255,0.5);">|</span>
+                <a href="pages/contact.html">Contact</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts externes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Script principal -->
+    <script src="js/app.js"></script>
+    
+    <!-- Enregistrement du Service Worker pour PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker enregistré:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Erreur Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html> par date :</label>
+                            <button class="btn btn-small" onclick="sortTable('asc')">↑ Croissant</button>
+                            <button class="btn btn-small" onclick="sortTable('desc')">↓ Décroissant</button>
+                        </div>
+                        <table id="detailsTable">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortTable('date')">Date</th>
+                                    <th>Sécurité Sociale</th>
+                                    <th>Mutuelle (MNT)</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Details will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="cotisationsTab" class="tab-content">
+                    <div id="cotisationsContent">
+                        <!-- Cotisations form will be inserted here -->
+                    </div>
+                </div>
+
+                <div id="analyticsTab" class="tab-content">
+                    <div id="analyticsContent">
+                        <!-- Analytics will be inserted here -->
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn" onclick="resetApp()">Analyser un nouveau fichier</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="downloadStatus" class="download-status">
+                PDF généré avec succès !
+            </div>
+            
+        </div>
+        
+        <footer style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 15px; backdrop-filter: blur(10px);">
+            <div style="color: rgba(255,255,255,0.9); font-size: 14px;">
+                <a href="mentions.html" style="color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 10px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Mentions légales</a>
+                <span style="color: rgba(255,255,255,0.5);">|</span>
+                <a href="confidentialite.html" style="color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 10px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Confidentialité</a>
+                <span style="color: rgba(255,255,255,0.5);">|</span>
+                <a href="cgu.html" style="color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 10px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">CGU</a>
+                <span style="color: rgba(255,255,255,0.5);">|</span>
+                <a href="contact.html" style="color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 10px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">Contact</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Configuration PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        // Supprimer les warnings de la console
+        const originalWarn = console.warn;
+        console.warn = function(message) {
+            if (message && message.toString().includes('Setting up fake worker')) {
+                return;
+            }
+            originalWarn.apply(console, arguments);
+        };
+
+        let analysisData = null;
+        let cotisationsData = {};
+        let currentSortOrder = 'desc';
+        let charts = {};
+
+        // Gestion du drag & drop
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                processFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                processFile(file);
+            }
+        }
+
+        async function processFile(file) {
+            showLoading();
+            
+            try {
+                const text = await extractTextFromPDF(file);
+                analysisData = await analyzeDocument(text);
+                displayResults(analysisData);
+            } catch (error) {
+                showError('Erreur lors du traitement du fichier: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function extractTextFromPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            let fullText = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
+            }
+
+            return fullText;
+        }
+
+        async function analyzeDocument(text) {
+            const data = {
+                beneficiary: '',
+                period: '',
+                totalReimbursements: 0,
+                totalMutuelle: 0,
+                totalSecu: 0,
+                reimbursements: [],
+                pharmacyPayments: [],
+                totalByYear: {},
+                totalByMonth: {}
+            };
+
+            // Extraction du nom du bénéficiaire
+            const nameMatch = text.match(/([A-Z]+\s+[A-Z]+)\s+\d+\s+RUE/);
+            if (nameMatch) {
+                data.beneficiary = nameMatch[1];
+            }
+
+            // Extraction de la période
+            const periodMatch = text.match(/Période du (\d{2}\/\d{2}\/\d{4}) au (\d{2}\/\d{2}\/\d{4})/);
+            if (periodMatch) {
+                data.period = `${periodMatch[1]} au ${periodMatch[2]}`;
+            }
+
+            // Extraction des remboursements directs
+            const reimbursementPattern = /([^\n]+?)\s+(\d{2}\/\d{2}\/\d{4})\s+[A-Z\s]+\s+\d+\s+([\d,]+)\s€\s+([\d,]+)\s€/g;
+            let match;
+            while ((match = reimbursementPattern.exec(text)) !== null) {
+                const care = match[1].trim();
+                const date = match[2];
+                const secuAmount = parseFloat(match[3].replace(',', '.'));
+                const mutuelleAmount = parseFloat(match[4].replace(',', '.'));
+                const year = date.split('/')[2];
+                const month = `${year}-${date.split('/')[1].padStart(2, '0')}`;
+
+                data.reimbursements.push({
+                    date: date,
+                    care: care,
+                    secuAmount: secuAmount,
+                    mutuelleAmount: mutuelleAmount,
+                    total: secuAmount + mutuelleAmount,
+                    resteACharge: 0
+                });
+
+                data.totalSecu += secuAmount;
+                data.totalMutuelle += mutuelleAmount;
+                data.totalReimbursements += secuAmount + mutuelleAmount;
+
+                // Agrégation par année
+                if (!data.totalByYear[year]) {
+                    data.totalByYear[year] = { mutuelle: 0, secu: 0 };
+                }
+                data.totalByYear[year].mutuelle += mutuelleAmount;
+                data.totalByYear[year].secu += secuAmount;
+
+                // Agrégation par mois
+                if (!data.totalByMonth[month]) {
+                    data.totalByMonth[month] = { mutuelle: 0, secu: 0 };
+                }
+                data.totalByMonth[month].mutuelle += mutuelleAmount;
+                data.totalByMonth[month].secu += secuAmount;
+            }
+
+            // Extraction des paiements pharmacie
+            const pharmacyPattern = /([^\n]+?)\s+(\d{2}\/\d{2}\/\d{4})\s+\d{2}\/\d{2}\/\d{4}\s+[A-Z\s]+\s+[A-Z\s]+\s+([\d,]+)\s€\s+([\d,]+)\s€/g;
+            while ((match = pharmacyPattern.exec(text)) !== null) {
+                const item = match[1].trim();
+                const date = match[2];
+                const secuAmount = parseFloat(match[3].replace(',', '.'));
+                const mutuelleAmount = parseFloat(match[4].replace(',', '.'));
+
+                if (mutuelleAmount > 0) {
+                    data.pharmacyPayments.push({
+                        date: date,
+                        item: item,
+                        secuAmount: secuAmount,
+                        mutuelleAmount: mutuelleAmount,
+                        total: secuAmount + mutuelleAmount
+                    });
+
+                    const year = date.split('/')[2];
+                    const month = `${year}-${date.split('/')[1].padStart(2, '0')}`;
+
+                    // Agrégation par année
+                    if (!data.totalByYear[year]) {
+                        data.totalByYear[year] = { mutuelle: 0, secu: 0 };
+                    }
+                    data.totalByYear[year].mutuelle += mutuelleAmount;
+                    data.totalByYear[year].secu += secuAmount;
+
+                    // Agrégation par mois
+                    if (!data.totalByMonth[month]) {
+                        data.totalByMonth[month] = { mutuelle: 0, secu: 0 };
+                    }
+                    data.totalByMonth[month].mutuelle += mutuelleAmount;
+                    data.totalByMonth[month].secu += secuAmount;
+
+                    data.totalMutuelle += mutuelleAmount;
+                    data.totalSecu += secuAmount;
+                    data.totalReimbursements += mutuelleAmount + secuAmount;
+                }
+            }
+
+            return data;
+        }
+
+        function displayResults(data) {
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('instructionsNotice').style.display = 'none'; // Masquer les instructions
+            document.getElementById('descriptionNotice').style.display = 'none'; // Masquer la description
+            document.getElementById('confidentialityNotice').style.display = 'none'; // Masquer la confidentialité
+            document.getElementById('resultsSection').style.display = 'block';
+
+            displayDetails(data);
+            displayCotisations(data);
+            displayAnalytics(data);
+        }
+
+        function displayDetails(data) {
+            const tbody = document.getElementById('detailsTable').querySelector('tbody');
+            let allItems = [];
+
+            data.reimbursements.forEach(item => {
+                allItems.push({
+                    date: item.date,
+                    secuAmount: item.secuAmount,
+                    mutuelleAmount: item.mutuelleAmount,
+                    resteACharge: item.resteACharge,
+                    total: item.total
+                });
+            });
+
+            data.pharmacyPayments.forEach(item => {
+                allItems.push({
+                    date: item.date,
+                    secuAmount: item.secuAmount,
+                    mutuelleAmount: item.mutuelleAmount,
+                    resteACharge: 0,
+                    total: item.total
+                });
+            });
+
+            sortItems(allItems, currentSortOrder);
+            
+            let rows = '';
+            allItems.forEach(item => {
+                rows += `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td class="amount-cell positive">${item.secuAmount.toFixed(2)}€</td>
+                        <td class="amount-cell positive">${item.mutuelleAmount.toFixed(2)}€</td>
+                        <td class="amount-cell positive"><strong>${item.total.toFixed(2)}€</strong></td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = rows;
+        }
+
+        function sortTable(order) {
+            if (order) {
+                currentSortOrder = order;
+            }
+            displayDetails(analysisData);
+        }
+
+        function sortItems(items, order) {
+            items.sort((a, b) => {
+                const dateA = new Date(a.date.split('/').reverse().join('-'));
+                const dateB = new Date(b.date.split('/').reverse().join('-'));
+                
+                if (order === 'asc') {
+                    return dateA - dateB;
+                } else {
+                    return dateB - dateA;
+                }
+            });
+        }
+
+        function displayCotisations(data) {
+            const cotisationsContent = document.getElementById('cotisationsContent');
+            const years = Object.keys(data.totalByYear).sort((a, b) => b - a); // Tri décroissant
+            
+            if (years.length === 0) return;
+            
+            if (!window.selectedYear) {
+                window.selectedYear = years[0];
+            }
+            
+            let yearOptions = '';
+            years.forEach(year => {
+                const isSelected = year === window.selectedYear ? 'selected' : '';
+                yearOptions += `<option value="${year}" ${isSelected}>${year}</option>`;
+            });
+
+            cotisationsContent.innerHTML = `
+                <div class="cotisation-form">
+                    <h3 style="margin-bottom: 20px; color: #4a5568;">Gestion des Cotisations Mutuelles</h3>
+                    <p style="margin-bottom: 20px; color: #718096;">
+                        Renseignez vos cotisations mensuelles pour calculer le coût réel de votre mutuelle.
+                    </p>
+                    
+                    <div class="year-selector" style="margin-bottom: 20px;">
+                        <label style="font-weight: 500; color: #4a5568; margin-bottom: 10px; display: block;">
+                            Sélectionnez une année :
+                        </label>
+                        <select id="yearSelector" onchange="selectYearFromDropdown()">
+                            ${yearOptions}
+                        </select>
+                    </div>
+                    
+                    <div id="year-content">
+                        <!-- Le contenu de l'année sélectionnée sera affiché ici -->
+                    </div>
+                    
+                    <div class="privacy-notice" style="background: #f0f8ff; color: #1e3a8a; border-left-color: #3b82f6; margin-top: 20px;">
+                        <strong>📊 Note sur le bilan :</strong> Un bilan positif indique un bénéfice (vous récupérez plus que ce que vous payez), un bilan négatif indique un déficit (vous payez plus que ce que vous récupérez).
+                    </div>
+                    
+                    <div class="privacy-notice" style="background: #fef3c7; color: #92400e; border-left-color: #f59e0b; margin-top: 15px;">
+                        <strong>⚠️ Avertissement :</strong> Les résultats sont indicatifs et fournis à titre informatif uniquement. Vérifiez toujours les calculs avec vos documents officiels. L'éditeur ne saurait être tenu responsable d'erreurs de calcul.
+                    </div>
+                </div>
+            `;
+            
+            displayYearContent(window.selectedYear, data);
+        }
+
+        function selectYear(year) {
+            window.selectedYear = year;
+            displayYearContent(year, analysisData);
+        }
+
+        function selectYearFromDropdown() {
+            const yearSelector = document.getElementById('yearSelector');
+            const selectedYear = yearSelector.value;
+            window.selectedYear = selectedYear;
+            displayYearContent(selectedYear, analysisData);
+        }
+
+        function displayYearContent(year, data) {
+            const yearContent = document.getElementById('year-content');
+            
+            yearContent.innerHTML = `
+                <div class="year-section">
+                    <div class="year-title">Année ${year}</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cotisation-${year}">Total cotisation mensuelle :</label>
+                            <input type="number" id="cotisation-${year}" 
+                                   placeholder="Ex: 85.50" step="0.01" 
+                                   value="${cotisationsData[year] ? cotisationsData[year].cotisationMensuelle : ''}"
+                                   onchange="calculateCotisations('${year}')">
+                        </div>
+                        <div class="form-group">
+                            <label for="employeur-${year}">Contribution employeur mensuelle :</label>
+                            <input type="number" id="employeur-${year}" 
+                                   placeholder="Ex: 42.75" step="0.01" 
+                                   value="${cotisationsData[year] ? cotisationsData[year].employeurMensuel : ''}"
+                                   onchange="calculateCotisations('${year}')">
+                        </div>
+                    </div>
+                    <div class="calculations" id="calc-${year}">
+                        <div class="calc-row">
+                            <span>Total cotisation annuelle :</span>
+                            <span id="total-cotisation-${year}">${cotisationsData[year] ? cotisationsData[year].totalCotisationAnnuelle.toFixed(2) + '€' : '0.00€'}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span>Cotisation annuelle (vous) :</span>
+                            <span id="votre-cotisation-${year}">${cotisationsData[year] ? cotisationsData[year].votreCotisationAnnuelle.toFixed(2) + '€' : '0.00€'}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span>Contribution employeur annuelle :</span>
+                            <span id="contrib-employeur-${year}">${cotisationsData[year] ? cotisationsData[year].employeurAnnuel.toFixed(2) + '€' : '0.00€'}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span>Total remboursements reçus :</span>
+                            <span id="rembours-recu-${year}">${data.totalByYear[year] ? data.totalByYear[year].mutuelle.toFixed(2) : '0.00'}€</span>
+                        </div>
+                        <div class="calc-row">
+                            <span>Bilan :</span>
+                            <span id="deficit-${year}" style="color: ${cotisationsData[year] && cotisationsData[year].deficit > 0 ? '#38a169' : '#e53e3e'}">
+                                ${cotisationsData[year] ? cotisationsData[year].deficit.toFixed(2) + '€' : '0.00€'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateCotisations(year) {
+            const cotisationInput = document.getElementById(`cotisation-${year}`);
+            const employeurInput = document.getElementById(`employeur-${year}`);
+            
+            const totalCotisationMensuelle = parseFloat(cotisationInput.value) || 0;
+            const employeurMensuel = parseFloat(employeurInput.value) || 0;
+            
+            const totalCotisationAnnuelle = totalCotisationMensuelle * 12;
+            const employeurAnnuel = employeurMensuel * 12;
+            const votreCotisationAnnuelle = totalCotisationAnnuelle - employeurAnnuel;
+            
+            const remboursementsRecus = analysisData.totalByYear[year] ? 
+                analysisData.totalByYear[year].mutuelle : 0;
+            const deficit = remboursementsRecus - votreCotisationAnnuelle; // Inversé: remboursements - cotisations
+            
+            // Mise à jour de l'affichage
+            document.getElementById(`total-cotisation-${year}`).textContent = totalCotisationAnnuelle.toFixed(2) + '€';
+            document.getElementById(`votre-cotisation-${year}`).textContent = votreCotisationAnnuelle.toFixed(2) + '€';
+            document.getElementById(`contrib-employeur-${year}`).textContent = employeurAnnuel.toFixed(2) + '€';
+            document.getElementById(`rembours-recu-${year}`).textContent = remboursementsRecus.toFixed(2) + '€';
+            
+            const deficitElement = document.getElementById(`deficit-${year}`);
+            deficitElement.textContent = deficit.toFixed(2) + '€';
+            deficitElement.style.color = deficit > 0 ? '#38a169' : '#e53e3e'; // Inversé: positif = vert, négatif = rouge
+            
+            // Sauvegarde des données
+            cotisationsData[year] = {
+                cotisationMensuelle: totalCotisationMensuelle,
+                employeurMensuel: employeurMensuel,
+                votreCotisationAnnuelle: votreCotisationAnnuelle,
+                employeurAnnuel: employeurAnnuel,
+                totalCotisationAnnuelle: totalCotisationAnnuelle,
+                remboursementsRecus: remboursementsRecus,
+                deficit: deficit
+            };
+        }
+
+        function displayAnalytics(data) {
+            const analyticsContent = document.getElementById('analyticsContent');
+            
+            const totalItems = data.reimbursements.length + data.pharmacyPayments.length;
+            const avgReimbursement = totalItems > 0 ? data.totalReimbursements / totalItems : 0;
+            const avgMutuelleReimbursement = totalItems > 0 ? data.totalMutuelle / totalItems : 0;
+            const avgSecuReimbursement = totalItems > 0 ? data.totalSecu / totalItems : 0;
+            
+            // Calcul du déficit total et moyen
+            const years = Object.keys(data.totalByYear).sort();
+            let totalDeficit = 0;
+            let yearsWithData = 0;
+            
+            years.forEach(year => {
+                if (cotisationsData[year] && cotisationsData[year].deficit) {
+                    totalDeficit += cotisationsData[year].deficit;
+                    yearsWithData++;
+                }
+            });
+            
+            const avgDeficit = yearsWithData > 0 ? totalDeficit / yearsWithData : 0;
+
+            // Destruction des anciens graphiques
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+
+            analyticsContent.innerHTML = `
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>Total Remboursements Mutuelle</h3>
+                        <div class="amount">${data.totalMutuelle.toFixed(2)}€</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Total Remboursements Sécurité Sociale</h3>
+                        <div class="amount">${data.totalSecu.toFixed(2)}€</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Total Bilan Mutuelle</h3>
+                        <div class="amount" style="color: ${totalDeficit > 0 ? '#38a169' : '#e53e3e'}">${totalDeficit.toFixed(2)}€</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Bilan Mutuelle Annuel Moyen</h3>
+                        <div class="amount" style="color: ${avgDeficit > 0 ? '#38a169' : '#e53e3e'}">${avgDeficit.toFixed(2)}€</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Nombre de remboursements</h3>
+                        <div class="amount">${totalItems}</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Remboursement Mutuelle moyen</h3>
+                        <div class="amount">${avgMutuelleReimbursement.toFixed(2)}€</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Remboursement Sécurité Sociale moyen</h3>
+                        <div class="amount">${avgSecuReimbursement.toFixed(2)}€</div>
+                    </div>
+                </div>
+                
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">📊 Analyse financière par année</h3>
+                        </div>
+                        <canvas id="yearlyChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">🥧 Répartition Mutuelle vs Sécurité Sociale</h3>
+                        </div>
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-download" onclick="downloadAllChartsAsPDF()">
+                        📊 Télécharger le rapport complet
+                    </button>
+                </div>
+            `;
+
+            // Créer les graphiques après l'insertion du HTML
+            setTimeout(() => {
+                createYearlyChart(data);
+                createPieChart(data);
+            }, 100);
+        }
+
+        function createYearlyChart(data) {
+            const ctx = document.getElementById('yearlyChart');
+            if (!ctx) return;
+
+            const years = Object.keys(data.totalByYear).sort();
+            const mutuelleData = years.map(year => data.totalByYear[year].mutuelle);
+            const secuData = years.map(year => data.totalByYear[year].secu);
+            
+            const yourCotisationsData = years.map(year => {
+                return cotisationsData[year] ? cotisationsData[year].votreCotisationAnnuelle : 0;
+            });
+            const deficitData = years.map(year => {
+                return cotisationsData[year] ? cotisationsData[year].deficit : 0;
+            });
+
+            charts.yearly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Remboursement Mutuelle',
+                        data: mutuelleData,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                    }, {
+                        label: 'Remboursement Sécurité Sociale',
+                        data: secuData,
+                        backgroundColor: 'rgba(56, 178, 172, 0.8)',
+                        borderColor: 'rgba(56, 178, 172, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                    }, {
+                        label: 'Cotisation annuelle (vous)',
+                        data: yourCotisationsData,
+                        backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                    }, {
+                        label: 'Bilan',
+                        data: deficitData,
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 20,
+                            bottom: 50,
+                            left: 20,
+                            right: 20
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'center',
+                            maxWidth: 800,
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 13,
+                                    weight: '500'
+                                },
+                                boxWidth: 10,
+                                generateLabels: function(chart) {
+                                    const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                                    const labels = original.call(this, chart);
+                                    return labels.map(label => {
+                                        // Raccourcir les textes pour qu'ils tiennent sur une ligne
+                                        if (label.text === 'Cotisation annuelle (vous)') {
+                                            label.text = 'Votre cotisation';
+                                        }
+                                        return label;
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: 'rgba(102, 126, 234, 0.5)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '€';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 0,
+                                minRotation: 0,
+                                font: {
+                                    size: 14,
+                                    weight: '500'
+                                },
+                                padding: 10
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                },
+                                callback: function(value) {
+                                    return value.toFixed(0) + '€';
+                                },
+                                padding: 8
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        function createPieChart(data) {
+            const ctx = document.getElementById('pieChart');
+            if (!ctx) return;
+
+            charts.pie = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mutuelle', 'Sécurité Sociale'],
+                    datasets: [{
+                        data: [data.totalMutuelle, data.totalSecu],
+                        backgroundColor: [
+                            'rgba(102, 126, 234, 0.8)',
+                            'rgba(56, 178, 172, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(102, 126, 234, 1)',
+                            'rgba(56, 178, 172, 1)'
+                        ],
+                        borderWidth: 3,
+                        hoverBackgroundColor: [
+                            'rgba(102, 126, 234, 0.9)',
+                            'rgba(56, 178, 172, 0.9)'
+                        ],
+                        cutout: '50%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 30,
+                            bottom: 80,
+                            left: 30,
+                            right: 30
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 25,
+                                font: {
+                                    size: 14,
+                                    weight: '500'
+                                },
+                                boxWidth: 18,
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    return data.labels.map((label, index) => {
+                                        const value = data.datasets[0].data[index];
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return {
+                                            text: `${label}: ${value.toFixed(2)}€ (${percentage}%)`,
+                                            fillStyle: data.datasets[0].backgroundColor[index],
+                                            hidden: false,
+                                            index: index
+                                        };
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: 'rgba(102, 126, 234, 0.5)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed.toFixed(2) + '€ (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        // Fonction pour télécharger un graphique spécifique en PDF
+        async function downloadChartAsPDF(chartId, filename) {
+            try {
+                const canvas = document.getElementById(chartId);
+                if (!canvas) {
+                    showError('Graphique non trouvé');
+                    return;
+                }
+
+                // Créer une instance jsPDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                // Créer un canvas temporaire avec une résolution plus élevée
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                const pixelRatio = window.devicePixelRatio || 1;
+                const scaleFactor = 3; // Augmenter le facteur d'échelle
+                
+                tempCanvas.width = canvas.width * scaleFactor;
+                tempCanvas.height = canvas.height * scaleFactor;
+                tempCtx.scale(scaleFactor, scaleFactor);
+                
+                // Activer l'anticrénelage
+                tempCtx.imageSmoothingEnabled = true;
+                tempCtx.imageSmoothingQuality = 'high';
+                
+                // Ajouter un fond blanc
+                tempCtx.fillStyle = '#ffffff';
+                tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Redessiner le graphique
+                tempCtx.drawImage(canvas, 0, 0);
+                
+                // Obtenir l'image avec une qualité maximale
+                const imgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+                
+                // Calculer les dimensions pour un graphique plus petit
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = Math.min(pdfWidth - 40, 180); // Largeur réduite à 180mm max
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                // Centrer l'image
+                const x = (pdfWidth - imgWidth) / 2;
+                const y = (pdfHeight - imgHeight) / 2;
+
+                // Ajouter un titre
+                pdf.setFontSize(16);
+                pdf.text('Analyse des Remboursements de Mutuelle', pdfWidth / 2, 15, { align: 'center' });
+                
+                // Ajouter la date
+                pdf.setFontSize(10);
+                pdf.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, pdfWidth / 2, 25, { align: 'center' });
+
+                // Ajouter l'image du graphique avec haute qualité et taille réduite
+                pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight);
+
+                // Télécharger le PDF
+                pdf.save(filename);
+                showDownloadSuccess();
+
+            } catch (error) {
+                showError('Erreur lors de la génération du PDF: ' + error.message);
+            }
+        }
+
+        // Fonction pour télécharger tous les graphiques en un seul PDF
+        async function downloadAllChartsAsPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                let yPos = 20;
+
+                // Page de titre
+                pdf.setFontSize(20);
+                pdf.text('Rapport d\'Analyse', pdfWidth / 2, yPos, { align: 'center' });
+                yPos += 15;
+                pdf.text('Remboursements de Mutuelle', pdfWidth / 2, yPos, { align: 'center' });
+                yPos += 20;
+                
+                pdf.setFontSize(12);
+                pdf.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, pdfWidth / 2, yPos, { align: 'center' });
+                yPos += 10;
+                
+                if (analysisData.period) {
+                    pdf.text(`Période: ${analysisData.period}`, pdfWidth / 2, yPos, { align: 'center' });
+                    yPos += 20;
+                }
+
+                // Synthèse financière complète
+                const totalItems = analysisData.reimbursements.length + analysisData.pharmacyPayments.length;
+                const avgReimbursement = totalItems > 0 ? analysisData.totalReimbursements / totalItems : 0;
+                const avgMutuelleReimbursement = totalItems > 0 ? analysisData.totalMutuelle / totalItems : 0;
+                const avgSecuReimbursement = totalItems > 0 ? analysisData.totalSecu / totalItems : 0;
+                
+                const years = Object.keys(analysisData.totalByYear).sort();
+                let totalDeficit = 0;
+                let yearsWithData = 0;
+                
+                years.forEach(year => {
+                    if (cotisationsData[year] && cotisationsData[year].deficit) {
+                        totalDeficit += cotisationsData[year].deficit;
+                        yearsWithData++;
+                    }
+                });
+                
+                const avgDeficit = yearsWithData > 0 ? totalDeficit / yearsWithData : 0;
+
+                pdf.setFontSize(14);
+                pdf.text('Synthèse Financière', 20, yPos);
+                yPos += 15;
+                
+                pdf.setFontSize(11);
+                pdf.text(`Total remboursements Mutuelle: ${analysisData.totalMutuelle.toFixed(2)}€`, 20, yPos);
+                yPos += 8;
+                pdf.text(`Total remboursements Sécurité Sociale: ${analysisData.totalSecu.toFixed(2)}€`, 20, yPos);
+                yPos += 8;
+                pdf.text(`Total bilan Mutuelle: ${totalDeficit.toFixed(2)}€`, 20, yPos);
+                yPos += 8;
+                pdf.text(`Bilan Mutuelle annuel moyen: ${avgDeficit.toFixed(2)}€`, 20, yPos);
+                yPos += 8;
+                pdf.text(`Nombre de remboursements: ${totalItems}`, 20, yPos);
+                yPos += 8;
+                pdf.text(`Remboursement Mutuelle moyen: ${avgMutuelleReimbursement.toFixed(2)}€`, 20, yPos);
+                yPos += 8;
+                pdf.text(`Remboursement Sécurité Sociale moyen: ${avgSecuReimbursement.toFixed(2)}€`, 20, yPos);
+                yPos += 20;
+
+                // Tableau des cotisations
+                if (Object.keys(cotisationsData).length > 0) {
+                    pdf.setFontSize(14);
+                    pdf.text('Détail des Cotisations par Année', 20, yPos);
+                    yPos += 15;
+
+                    // En-têtes du tableau
+                    pdf.setFontSize(9);
+                    const colWidths = [20, 30, 35, 30, 35, 35];
+                    const colPositions = [20, 40, 70, 105, 135, 170];
+                    const headers = ['Année', 'Cotisation/mois', 'Employeur/mois', 'Votre part/an', 'Remboursements/an', 'Bilan/an'];
+                    
+                    // Dessiner les en-têtes
+                    pdf.setFillColor(102, 126, 234);
+                    pdf.rect(20, yPos - 5, 170, 8, 'F');
+                    pdf.setTextColor(255, 255, 255);
+                    headers.forEach((header, i) => {
+                        pdf.text(header, colPositions[i] + 2, yPos, { maxWidth: colWidths[i] - 4 });
+                    });
+                    yPos += 10;
+                    
+                    pdf.setTextColor(0, 0, 0);
+                    
+                    // Données du tableau
+                    Object.keys(cotisationsData).sort().forEach((year, index) => {
+                        const data = cotisationsData[year];
+                        const rowData = [
+                            year,
+                            `${data.cotisationMensuelle.toFixed(2)}€`,
+                            `${data.employeurMensuel.toFixed(2)}€`,
+                            `${data.votreCotisationAnnuelle.toFixed(2)}€`,
+                            `${data.remboursementsRecus.toFixed(2)}€`,
+                            `${data.deficit.toFixed(2)}€`
+                        ];
+                        
+                        // Alterner les couleurs de fond
+                        if (index % 2 === 0) {
+                            pdf.setFillColor(245, 245, 245);
+                            pdf.rect(20, yPos - 5, 170, 8, 'F');
+                        }
+                        
+                        rowData.forEach((cell, i) => {
+                            pdf.text(cell, colPositions[i] + 2, yPos, { maxWidth: colWidths[i] - 4 });
+                        });
+                        yPos += 8;
+                    });
+                    yPos += 10;
+                }
+
+                // Ajouter les graphiques avec taille réduite
+                const chartIds = ['yearlyChart', 'pieChart'];
+                const chartTitles = ['Analyse financière par année', 'Répartition Mutuelle vs Sécurité Sociale'];
+
+                for (let i = 0; i < chartIds.length; i++) {
+                    const canvas = document.getElementById(chartIds[i]);
+                    if (canvas) {
+                        // Nouvelle page pour chaque graphique
+                        pdf.addPage();
+
+                        // Titre du graphique
+                        pdf.setFontSize(16);
+                        pdf.text(chartTitles[i], pdfWidth / 2, 20, { align: 'center' });
+
+                        // Créer un canvas haute résolution pour le graphique
+                        const tempCanvas = document.createElement('canvas');
+                        const tempCtx = tempCanvas.getContext('2d');
+                        const scaleFactor = 3;
+                        
+                        tempCanvas.width = canvas.width * scaleFactor;
+                        tempCanvas.height = canvas.height * scaleFactor;
+                        tempCtx.scale(scaleFactor, scaleFactor);
+                        
+                        tempCtx.imageSmoothingEnabled = true;
+                        tempCtx.imageSmoothingQuality = 'high';
+                        
+                        // Ajouter un fond blanc
+                        tempCtx.fillStyle = '#ffffff';
+                        tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        tempCtx.drawImage(canvas, 0, 0);
+                        
+                        const imgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+                        
+                        // Dimensions plus petites pour les graphiques
+                        const maxWidth = Math.min(pdfWidth - 60, 130); // Largeur réduite à 130mm max
+                        const maxHeight = pdfHeight - 100;
+                        
+                        let imgWidth = maxWidth;
+                        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+                        
+                        // Si trop haut, ajuster selon la hauteur
+                        if (imgHeight > maxHeight) {
+                            imgHeight = maxHeight;
+                            imgWidth = (canvas.width * imgHeight) / canvas.height;
+                        }
+                        
+                        const x = (pdfWidth - imgWidth) / 2;
+                        const y = 50;
+
+                        pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+                    }
+                }
+
+                // Télécharger le PDF complet
+                pdf.save('rapport-analyse-mutuelle.pdf');
+                showDownloadSuccess();
+
+            } catch (error) {
+                showError('Erreur lors de la génération du PDF: ' + error.message);
+            }
+        }
+
+        function showDownloadSuccess() {
+            const statusDiv = document.getElementById('downloadStatus');
+            statusDiv.style.display = 'block';
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function switchTab(tabName) {
+            // Masquer tous les onglets
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Afficher l'onglet sélectionné
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+
+            // Si on bascule vers l'onglet analytics, recréer les graphiques
+            if (tabName === 'analytics' && analysisData) {
+                setTimeout(() => {
+                    displayAnalytics(analysisData);
+                }, 100);
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('loadingSection').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSection').style.display = 'none';
+        }
+
+        function showError(message) {
+            const uploadSection = document.getElementById('uploadSection');
+            uploadSection.style.display = 'block';
+            
+            let errorDiv = document.getElementById('errorMessage');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            
+            errorDiv = document.createElement('div');
+            errorDiv.id = 'errorMessage';
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = message;
+            
+            uploadSection.appendChild(errorDiv);
+        }
+
+        function resetApp() {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('instructionsNotice').style.display = 'block'; // Réafficher les instructions
+            document.getElementById('descriptionNotice').style.display = 'block'; // Réafficher la description
+            document.getElementById('confidentialityNotice').style.display = 'block'; // Réafficher la confidentialité
+            document.getElementById('fileInput').value = '';
+            
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.remove();
+            }
+            
+            // Détruire les graphiques existants
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+            
+            analysisData = null;
+            cotisationsData = {};
+            currentSortOrder = 'desc';
+            window.selectedYear = null;
+        }
+    </script>
+</body>
+</html>
