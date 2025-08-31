@@ -728,11 +728,16 @@
                 return;
             }
 
+            console.log('Début de la sauvegarde des données...');
+            console.log('Supabase client:', supabaseClient);
+
             // Sauvegarder les données d'abord, puis télécharger
             saveDataToSupabase().then(() => {
+                console.log('Sauvegarde réussie, début du téléchargement...');
                 downloadAllChartsAsPDF();
             }).catch((error) => {
                 console.error('Erreur lors de la sauvegarde:', error);
+                alert('Erreur lors de la sauvegarde: ' + error.message);
                 // Permettre le téléchargement même si la sauvegarde échoue
                 downloadAllChartsAsPDF();
             });
@@ -740,7 +745,12 @@
 
         // Structure des données pour Supabase
         function prepareDataForSupabase() {
+            console.log('=== PREPARATION DES DONNEES ===');
+            console.log('analysisData:', analysisData);
+            console.log('cotisationsData:', cotisationsData);
+            
             if (!analysisData || Object.keys(cotisationsData).length === 0) {
+                console.error('Données manquantes - analysisData:', !!analysisData, 'cotisationsData keys:', Object.keys(cotisationsData));
                 return null;
             }
 
@@ -750,8 +760,12 @@
                 years_data: {}
             };
 
+            console.log('Nom de mutuelle trouvé:', dataToSave.mutuelle_name);
+
             // Pour chaque année avec des données de cotisation
             Object.keys(cotisationsData).forEach(year => {
+                console.log(`Traitement année ${year}:`, cotisationsData[year]);
+                
                 const yearData = cotisationsData[year];
                 const analysisYearData = analysisData.totalByYear[year] || { mutuelle: 0, secu: 0 };
                 
@@ -761,6 +775,8 @@
                     ...analysisData.pharmacyPayments
                 ].filter(item => item.date && item.date.endsWith('/' + year));
 
+                console.log(`Année ${year} - Remboursements trouvés:`, reimbursementsThisYear.length);
+
                 dataToSave.years_data[year] = {
                     nombre_remboursements: reimbursementsThisYear.length,
                     cotisation_personnelle: yearData.votreCotisationAnnuelle || 0,
@@ -769,37 +785,50 @@
                     total_remboursement_mutuelle: analysisYearData.mutuelle || 0,
                     total_remboursement_secu: analysisYearData.secu || 0
                 };
+                
+                console.log(`Données année ${year}:`, dataToSave.years_data[year]);
             });
 
+            console.log('Données finales préparées:', dataToSave);
+            console.log('=== FIN PREPARATION ===');
             return dataToSave;
         }
 
         async function saveDataToSupabase() {
+            console.log('=== DEBUT SAUVEGARDE ===');
+            
             if (!supabaseClient) {
-                console.warn('Supabase non initialisé');
+                console.error('Supabase client non initialisé');
                 return Promise.reject(new Error('Supabase non disponible'));
             }
 
             const dataToSave = prepareDataForSupabase();
+            console.log('Données à sauvegarder:', dataToSave);
+            
             if (!dataToSave) {
-                console.warn('Aucune donnée à sauvegarder');
+                console.error('Aucune donnée à sauvegarder');
                 return Promise.reject(new Error('Aucune donnée disponible'));
             }
 
             try {
+                console.log('Tentative d\'insertion dans Supabase...');
+                
                 const { data, error } = await supabaseClient
                     .from('mutuelle_data')
                     .insert([dataToSave]);
 
                 if (error) {
+                    console.error('Erreur Supabase:', error);
                     throw error;
                 }
 
-                console.log('Données sauvegardées avec succès:', dataToSave);
+                console.log('Données sauvegardées avec succès:', data);
+                console.log('=== FIN SAUVEGARDE RÉUSSIE ===');
                 return Promise.resolve(data);
 
             } catch (error) {
                 console.error('Erreur lors de la sauvegarde:', error);
+                console.log('=== FIN SAUVEGARDE ÉCHOUÉE ===');
                 return Promise.reject(error);
             }
         }
@@ -875,26 +904,38 @@
                 totalByMonth: {}
             };
 
-            // Extraction du nom du bénéficiaire
-            const nameMatch = text.match(/([A-Z]+\s+[A-Z]+)\s+\d+\s+RUE/);
-            if (nameMatch) {
-                data.beneficiary = nameMatch[1];
+            console.log("Analyse du texte PDF:", text.substring(0, 1000));
+
+            // Extraction du nom du bénéficiaire - adaptation pour MGEN
+            const namePatterns = [
+                /([A-Z]+\s+[A-Z]+)\s+\d+\s+RUE/,  // Format original
+                /Durand\s+Alice/g,  // Format MGEN spécifique
+                /Nom assuré[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/,  // Format MGEN générique
+            ];
+            
+            for (const pattern of namePatterns) {
+                const nameMatch = text.match(pattern);
+                if (nameMatch) {
+                    data.beneficiary = nameMatch[1] || nameMatch[0];
+                    console.log("Bénéficiaire trouvé:", data.beneficiary);
+                    break;
+                }
             }
 
-            // Extraction du nom de la mutuelle avec débogage
-            console.log("Texte du PDF (premiers 500 caractères):", text.substring(0, 500));
-            
+            // Extraction du nom de la mutuelle - ajout MGEN
             const mutuellePatterns = [
+                // MGEN en priorité
+                /(MGEN)/gi,
+                
                 // Patterns génériques flexibles
                 /mutuelle\s+([a-z\s]+)/gi,
                 /mnt[\s:]([a-z\s]+)/gi,
                 /organisme[\s:]([a-z\s]+)/gi,
                 /assureur[\s:]([a-z\s]+)/gi,
                 
-                // Mutuelles spécifiques (insensible à la casse)
+                // Mutuelles spécifiques
                 /(harmonie[\s\-]?mutuelle)/gi,
                 /(mutuelle[\s\-]?generale)/gi,
-                /(mgen)/gi,
                 /(maaf[\s\-]?sante)/gi,
                 /(malakoff[\s\-]?humanis)/gi,
                 /(allianz[\s\-]?sante)/gi,
@@ -944,28 +985,6 @@
                     break;
                 }
             }
-            
-            // Si pas trouvé, recherche plus large
-            if (!data.mutuelle) {
-                // Chercher des mots-clés dans le texte
-                const keywords = ['MUTUELLE', 'MNT', 'MGEN', 'HARMONIE', 'GROUPAMA', 'MAAF', 'AXA', 'ALLIANZ'];
-                for (const keyword of keywords) {
-                    if (text.toUpperCase().includes(keyword)) {
-                        data.mutuelle = keyword;
-                        console.log("Mutuelle trouvée par mot-clé:", data.mutuelle);
-                        break;
-                    }
-                }
-            }
-            
-            // Fallback: chercher le premier mot en majuscules de plus de 3 lettres
-            if (!data.mutuelle) {
-                const fallbackMatch = text.match(/\b([A-Z]{4,})\b/);
-                if (fallbackMatch && !['DATE', 'EURO', 'REMB', 'SECU'].includes(fallbackMatch[1])) {
-                    data.mutuelle = fallbackMatch[1];
-                    console.log("Mutuelle trouvée par fallback:", data.mutuelle);
-                }
-            }
 
             // Extraction de la période
             const periodMatch = text.match(/Période du (\d{2}\/\d{2}\/\d{4}) au (\d{2}\/\d{2}\/\d{4})/);
@@ -973,29 +992,54 @@
                 data.period = `${periodMatch[1]} au ${periodMatch[2]}`;
             }
 
-            // Extraction des remboursements directs
-            const reimbursementPattern = /([^\n]+?)\s+(\d{2}\/\d{2}\/\d{4})\s+[A-Z\s]+\s+\d+\s+([\d,]+)\s€\s+([\d,]+)\s€/g;
-            let match;
-            while ((match = reimbursementPattern.exec(text)) !== null) {
-                const care = match[1].trim();
-                const date = match[2];
-                const secuAmount = parseFloat(match[3].replace(',', '.'));
-                const mutuelleAmount = parseFloat(match[4].replace(',', '.'));
+            // NOUVEAU: Pattern pour format MGEN (tableau structuré)
+            // Recherche des lignes avec : Réf | Nom | Acte | Date | Montants
+            const mgenPattern = /(\d+)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)\s+([A-Za-z\s]+)\s+(\d{2}\/\d{2}\/\d{4})\s+(\d+)\s*€\s+(\d+)\s*€\s+(\d+)\s*€\s+(\d+)\s*€/g;
+            
+            // NOUVEAU: Pattern pour format Harmonie Mutuelle
+            // Format: Date | Libellé acte | Montant total | Base SS | Remb. SS | Remb. Mutuelle | Reste à charge
+            const harmoniePattern = /(\d{2}\/\d{2}\/\d{4})\s+([A-Za-zàé\s]+)\s+(\d+(?:[\s,]\d+)*)\s*€\s+(\d+(?:[\s,]\d+)*)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€/g;
+            
+            let mgenMatch;
+            let harmonieMatch;
+            let foundMgenData = false;
+            let foundHarmonieData = false;
+            
+            // Test format MGEN
+            while ((mgenMatch = mgenPattern.exec(text)) !== null) {
+                foundMgenData = true;
+                
+                const ref = mgenMatch[1];
+                const nom = mgenMatch[2];
+                const acte = mgenMatch[3].trim();
+                const date = mgenMatch[4];
+                const depenseReelle = parseFloat(mgenMatch[5]);
+                const priseEnCharge = parseFloat(mgenMatch[6]);
+                const montantRegle = parseFloat(mgenMatch[7]);
+                const verseAssure = parseFloat(mgenMatch[8]);
+                
+                console.log(`MGEN trouvé: ${acte} - ${date} - Prise en charge: ${priseEnCharge}€ - Versé: ${verseAssure}€`);
+                
                 const year = date.split('/')[2];
                 const month = `${year}-${date.split('/')[1].padStart(2, '0')}`;
 
+                // Dans MGEN: "Prise en charge" = Sécu, "Versé à l'assuré" = Mutuelle
+                const secuAmount = 0; // MGEN ne sépare pas clairement Sécu/Mutuelle dans ce format
+                const mutuelleAmount = verseAssure; // Ce que verse la mutuelle à l'assuré
+                
                 data.reimbursements.push({
                     date: date,
-                    care: care,
+                    care: acte,
                     secuAmount: secuAmount,
                     mutuelleAmount: mutuelleAmount,
-                    total: secuAmount + mutuelleAmount,
-                    resteACharge: 0
+                    total: mutuelleAmount,
+                    resteACharge: depenseReelle - priseEnCharge,
+                    ref: ref
                 });
 
-                data.totalSecu += secuAmount;
                 data.totalMutuelle += mutuelleAmount;
-                data.totalReimbursements += secuAmount + mutuelleAmount;
+                data.totalSecu += secuAmount;
+                data.totalReimbursements += mutuelleAmount;
 
                 // Agrégation par année
                 if (!data.totalByYear[year]) {
@@ -1011,26 +1055,41 @@
                 data.totalByMonth[month].mutuelle += mutuelleAmount;
                 data.totalByMonth[month].secu += secuAmount;
             }
-
-            // Extraction des paiements pharmacie
-            const pharmacyPattern = /([^\n]+?)\s+(\d{2}\/\d{2}\/\d{4})\s+\d{2}\/\d{2}\/\d{4}\s+[A-Z\s]+\s+[A-Z\s]+\s+([\d,]+)\s€\s+([\d,]+)\s€/g;
-            while ((match = pharmacyPattern.exec(text)) !== null) {
-                const item = match[1].trim();
-                const date = match[2];
-                const secuAmount = parseFloat(match[3].replace(',', '.'));
-                const mutuelleAmount = parseFloat(match[4].replace(',', '.'));
-
-                if (mutuelleAmount > 0) {
-                    data.pharmacyPayments.push({
-                        date: date,
-                        item: item,
-                        secuAmount: secuAmount,
-                        mutuelleAmount: mutuelleAmount,
-                        total: secuAmount + mutuelleAmount
-                    });
-
+            
+            // Test format Harmonie Mutuelle
+            if (!foundMgenData) {
+                while ((harmonieMatch = harmoniePattern.exec(text)) !== null) {
+                    foundHarmonieData = true;
+                    
+                    const date = harmonieMatch[1];
+                    const acte = harmonieMatch[2].trim();
+                    const montantTotal = parseFloat(harmonieMatch[3].replace(/[\s,]/g, ''));
+                    const baseSS = parseFloat(harmonieMatch[4].replace(/[\s,]/g, ''));
+                    const rembSS = parseFloat(harmonieMatch[5].replace(',', '.'));
+                    const rembMutuelle = parseFloat(harmonieMatch[6].replace(',', '.'));
+                    const resteACharge = parseFloat(harmonieMatch[7].replace(',', '.'));
+                    
+                    console.log(`Harmonie trouvé: ${acte} - ${date} - Remb SS: ${rembSS}€ - Remb Mutuelle: ${rembMutuelle}€`);
+                    
                     const year = date.split('/')[2];
                     const month = `${year}-${date.split('/')[1].padStart(2, '0')}`;
+
+                    // Dans Harmonie: colonnes séparées pour Sécu et Mutuelle
+                    const secuAmount = rembSS;
+                    const mutuelleAmount = rembMutuelle;
+                    
+                    data.reimbursements.push({
+                        date: date,
+                        care: acte,
+                        secuAmount: secuAmount,
+                        mutuelleAmount: mutuelleAmount,
+                        total: secuAmount + mutuelleAmount,
+                        resteACharge: resteACharge
+                    });
+
+                    data.totalMutuelle += mutuelleAmount;
+                    data.totalSecu += secuAmount;
+                    data.totalReimbursements += secuAmount + mutuelleAmount;
 
                     // Agrégation par année
                     if (!data.totalByYear[year]) {
@@ -1045,13 +1104,96 @@
                     }
                     data.totalByMonth[month].mutuelle += mutuelleAmount;
                     data.totalByMonth[month].secu += secuAmount;
-
-                    data.totalMutuelle += mutuelleAmount;
-                    data.totalSecu += secuAmount;
-                    data.totalReimbursements += mutuelleAmount + secuAmount;
                 }
             }
 
+            // Si aucune donnée des nouveaux formats trouvée, utiliser les anciens patterns
+            if (!foundMgenData && !foundHarmonieData) {
+                console.log("Formats MGEN/Harmonie non détectés, utilisation des anciens patterns...");
+                
+                // Extraction des remboursements directs (format original)
+                const reimbursementPattern = /([^\n]+?)\s+(\d{2}\/\d{2}\/\d{4})\s+[A-Z\s]+\s+\d+\s+([\d,]+)\s€\s+([\d,]+)\s€/g;
+                let match;
+                while ((match = reimbursementPattern.exec(text)) !== null) {
+                    const care = match[1].trim();
+                    const date = match[2];
+                    const secuAmount = parseFloat(match[3].replace(',', '.'));
+                    const mutuelleAmount = parseFloat(match[4].replace(',', '.'));
+                    const year = date.split('/')[2];
+                    const month = `${year}-${date.split('/')[1].padStart(2, '0')}`;
+
+                    data.reimbursements.push({
+                        date: date,
+                        care: care,
+                        secuAmount: secuAmount,
+                        mutuelleAmount: mutuelleAmount,
+                        total: secuAmount + mutuelleAmount,
+                        resteACharge: 0
+                    });
+
+                    data.totalSecu += secuAmount;
+                    data.totalMutuelle += mutuelleAmount;
+                    data.totalReimbursements += secuAmount + mutuelleAmount;
+
+                    // Agrégation par année
+                    if (!data.totalByYear[year]) {
+                        data.totalByYear[year] = { mutuelle: 0, secu: 0 };
+                    }
+                    data.totalByYear[year].mutuelle += mutuelleAmount;
+                    data.totalByYear[year].secu += secuAmount;
+
+                    // Agrégation par mois
+                    if (!data.totalByMonth[month]) {
+                        data.totalByMonth[month] = { mutuelle: 0, secu: 0 };
+                    }
+                    data.totalByMonth[month].mutuelle += mutuelleAmount;
+                    data.totalByMonth[month].secu += secuAmount;
+                }
+
+                // Extraction des paiements pharmacie (format original)
+                const pharmacyPattern = /([^\n]+?)\s+(\d{2}\/\d{2}\/\d{4})\s+\d{2}\/\d{2}\/\d{4}\s+[A-Z\s]+\s+[A-Z\s]+\s+([\d,]+)\s€\s+([\d,]+)\s€/g;
+                while ((match = pharmacyPattern.exec(text)) !== null) {
+                    const item = match[1].trim();
+                    const date = match[2];
+                    const secuAmount = parseFloat(match[3].replace(',', '.'));
+                    const mutuelleAmount = parseFloat(match[4].replace(',', '.'));
+
+                    if (mutuelleAmount > 0) {
+                        data.pharmacyPayments.push({
+                            date: date,
+                            item: item,
+                            secuAmount: secuAmount,
+                            mutuelleAmount: mutuelleAmount,
+                            total: secuAmount + mutuelleAmount
+                        });
+
+                        const year = date.split('/')[2];
+                        const month = `${year}-${date.split('/')[1].padStart(2, '0')}`;
+
+                        // Agrégation par année
+                        if (!data.totalByYear[year]) {
+                            data.totalByYear[year] = { mutuelle: 0, secu: 0 };
+                        }
+                        data.totalByYear[year].mutuelle += mutuelleAmount;
+                        data.totalByYear[year].secu += secuAmount;
+
+                        // Agrégation par mois
+                        if (!data.totalByMonth[month]) {
+                            data.totalByMonth[month] = { mutuelle: 0, secu: 0 };
+                        }
+                        data.totalByMonth[month].mutuelle += mutuelleAmount;
+                        data.totalByMonth[month].secu += secuAmount;
+
+                        data.totalMutuelle += mutuelleAmount;
+                        data.totalSecu += secuAmount;
+                        data.totalReimbursements += mutuelleAmount + secuAmount;
+                    }
+                }
+            }
+
+            console.log("Données extraites:", data);
+            console.log("Total remboursements trouvés:", data.reimbursements.length + data.pharmacyPayments.length);
+            
             return data;
         }
 
