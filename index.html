@@ -1019,6 +1019,30 @@
 
             // Universal table extraction - improved regex patterns
             const tablePatterns = [
+                // Minimal format (only amounts, no dates)
+                {
+                    name: 'Minimal Format',
+                    pattern: /([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€/g,
+                    fields: ['depense', 'remboursement_total', 'reste_charge']
+                },
+                // Narrative format with "Votre dépense du"
+                {
+                    name: 'Narrative Depense',
+                    pattern: /Votre\s+dépense\s+du\s+(\d{2}\/\d{2}\/\d{4})\s+pour\s+([^(]+)\s*\(([\d,]+)\s*€\)[^€]*?(?:prise\s+en\s+charge|remboursée)\s+à\s+hauteur\s+de\s+([\d,]+)\s*€\s+par\s+la\s+Sécurité\s+sociale\s+et\s+de\s+([\d,]+)\s*€\s+par\s+votre\s+complémentaire/g,
+                    fields: ['date', 'description', 'montant_total', 'remb_ss', 'remb_complementaire']
+                },
+                // Multi-beneficiary format (simple remb total)
+                {
+                    name: 'Multi-Beneficiary',
+                    pattern: /(\d{2}\/\d{2}\/\d{4})\s+([A-Za-zÀ-ÿ\s\d]+)\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€/g,
+                    fields: ['date', 'acte', 'montant', 'remb_total', 'reste_charge']
+                },
+                // Malakoff Humanis format (reverse column order)
+                {
+                    name: 'Malakoff Humanis',
+                    pattern: /([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([A-Za-zÀ-ÿ\s]+)\s+(\d{2}\/\d{2}\/\d{4})/g,
+                    fields: ['reste_charge', 'montant_total', 'remb_mutuelle', 'remb_ss', 'base_ss', 'libelle', 'date']
+                },
                 // Allianz format (narrative style)
                 {
                     name: 'Allianz Narrative',
@@ -1072,7 +1096,59 @@
 
                     let dateStr, libelle, secuAmount = 0, mutuelleAmount = 0, total = 0;
 
-                    if (tableFormat.name === 'Allianz Narrative') {
+                    if (tableFormat.name === 'Minimal Format') {
+                        // Pour ce format minimal sans dates, on utilise une date générique
+                        dateStr = '01/07/2025'; // Date par défaut
+                        libelle = 'Remboursement'; // Description générique
+                        const depense = parseAmount(match[1]);
+                        const rembTotal = parseAmount(match[2]);
+                        const resteCharge = parseAmount(match[3]);
+                        
+                        // Tout le remboursement est attribué à la mutuelle car pas de séparation SS/Mutuelle
+                        secuAmount = 0;
+                        mutuelleAmount = rembTotal;
+                        total = rembTotal;
+                        
+                        console.log(`Minimal: ${libelle} - Remb total: ${rembTotal}€`);
+                        
+                    } else if (tableFormat.name === 'Narrative Depense') {
+                        dateStr = match[1];
+                        libelle = match[2].trim();
+                        const montantTotal = parseAmount(match[3]);
+                        secuAmount = parseAmount(match[4]);
+                        mutuelleAmount = parseAmount(match[5]);
+                        total = secuAmount + mutuelleAmount;
+                        
+                        console.log(`Narrative: ${libelle} - SS: ${secuAmount}€ - Mutuelle: ${mutuelleAmount}€`);
+                        
+                    } else if (tableFormat.name === 'Multi-Beneficiary') {
+                        dateStr = match[1];
+                        libelle = match[2].trim();
+                        const montant = parseAmount(match[3]);
+                        const rembTotal = parseAmount(match[4]);
+                        const resteCharge = parseAmount(match[5]);
+                        
+                        // Pour ce format, on met tout le remboursement en "mutuelle" 
+                        // car on ne peut pas distinguer SS/Mutuelle
+                        secuAmount = 0;
+                        mutuelleAmount = rembTotal;
+                        total = rembTotal;
+                        
+                        console.log(`Multi-Beneficiary: ${libelle} - Remb total: ${rembTotal}€`);
+                        
+                    } else if (tableFormat.name === 'Malakoff Humanis') {
+                        const resteCharge = parseAmount(match[1]);
+                        const montantTotal = parseAmount(match[2]);
+                        mutuelleAmount = parseAmount(match[3]);
+                        secuAmount = parseAmount(match[4]);
+                        const baseSS = parseAmount(match[5]);
+                        libelle = match[6].trim();
+                        dateStr = match[7];
+                        total = secuAmount + mutuelleAmount;
+                        
+                        console.log(`Malakoff: ${libelle} - SS: ${secuAmount}€ - Mutuelle: ${mutuelleAmount}€`);
+                        
+                    } else if (tableFormat.name === 'Allianz Narrative') {
                         libelle = match[1].trim();
                         dateStr = match[2];
                         const depense = parseAmount(match[3]);
