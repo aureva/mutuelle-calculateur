@@ -724,82 +724,89 @@
                 data.beneficiary = nameMatch[1];
             }
 
-            // Extraction du nom de la mutuelle
+            // Extraction du nom de la mutuelle avec débogage
+            console.log("Texte du PDF (premiers 500 caractères):", text.substring(0, 500));
+            
             const mutuellePatterns = [
-                // Patterns génériques
-                /MUTUELLE\s+([A-Z\s]+)/i,
-                /MNT\s+([A-Z\s]+)/i,
-                /(MNT|MUTUELLE)\s*:\s*([A-Z\s]+)/i,
-                /([A-Z\s]{3,})\s+MUTUELLE/i,
-                /ORGANISME\s*:\s*([A-Z\s]+)/i,
+                // Patterns génériques flexibles
+                /mutuelle\s+([a-z\s]+)/gi,
+                /mnt[\s:]([a-z\s]+)/gi,
+                /organisme[\s:]([a-z\s]+)/gi,
+                /assureur[\s:]([a-z\s]+)/gi,
                 
-                // Mutuelles spécifiques courantes
-                /(HARMONIE\s+MUTUELLE)/i,
-                /(MUTUELLE\s+GENERALE)/i,
-                /(MGEN)/i,
-                /(MAAF\s+SANTE)/i,
-                /(MALAKOFF\s+HUMANIS)/i,
-                /(ALLIANZ\s+SANTE)/i,
-                /(AXA\s+SANTE)/i,
-                /(GROUPAMA)/i,
-                /(MACIF\s+MUTUALITE)/i,
-                /(MATMUT)/i,
-                /(MAIF\s+SANTE)/i,
-                /(MUTEX)/i,
-                /(MYRIADE\s+MUTUELLE)/i,
-                /(ADREA\s+MUTUELLE)/i,
-                /(MUTUELLE\s+FAMILIALE)/i,
-                /(MUTUELLE\s+DES\s+MOTARDS)/i,
-                /(SMI)/i,
-                /(SMEBA)/i,
-                /(SMEREP)/i,
-                /(LMDE)/i,
-                /(EMEVIA)/i,
-                /(HEYME)/i,
-                /(MEP)/i,
-                /(MNH)/i,
-                /(MUTUELLE\s+NATIONALE\s+TERRITORIALE)/i,
-                /(MNT)/i,
-                /(MUTUELLE\s+INTEGRALIS)/i,
-                /(MUTUELLE\s+BLEUE)/i,
-                /(MUTUELLE\s+VERTE)/i,
-                /(MUTUELLE\s+DU\s+REMPART)/i,
-                /(APIVIA\s+MUTUELLE)/i,
-                /(VYV)/i,
-                /(EOVI\s+MCD)/i,
-                /(HENNER)/i,
-                /(APRIL)/i,
-                /(SWISS\s+LIFE)/i,
-                /(GENERALI)/i,
-                /(ALPTIS)/i,
-                /(CCMO\s+MUTUELLE)/i,
-                /(MGC)/i,
-                /(MUTUELLE\s+DU\s+MEDECIN)/i,
-                /(MUTUELLE\s+CENTRALE)/i,
-                /(PREVADIES)/i,
-                /(MUTEX\s+PRADO)/i,
-                /(RADIANCE\s+MUTUELLE)/i,
-                /(SOLIMUT)/i,
-                /(MUTUELLE\s+CHEMINOTS)/i,
-                /(MUTUELLE\s+CREDIT\s+AGRICOLE)/i,
-                /(MUTUELLE\s+SOCIETE\s+GENERALE)/i,
-                /(BNP\s+PARIBAS\s+CARDIF)/i,
-                /(CNP\s+ASSURANCES)/i
+                // Mutuelles spécifiques (insensible à la casse)
+                /(harmonie[\s\-]?mutuelle)/gi,
+                /(mutuelle[\s\-]?generale)/gi,
+                /(mgen)/gi,
+                /(maaf[\s\-]?sante)/gi,
+                /(malakoff[\s\-]?humanis)/gi,
+                /(allianz[\s\-]?sante)/gi,
+                /(axa[\s\-]?sante)/gi,
+                /(groupama)/gi,
+                /(macif[\s\-]?mutualite)/gi,
+                /(matmut)/gi,
+                /(maif[\s\-]?sante)/gi,
+                /(mutex)/gi,
+                /(myriade[\s\-]?mutuelle)/gi,
+                /(adrea[\s\-]?mutuelle)/gi,
+                /(mutuelle[\s\-]?familiale)/gi,
+                /(mutuelle[\s\-]?des[\s\-]?motards)/gi,
+                /(smi)/gi,
+                /(smeba)/gi,
+                /(smerep)/gi,
+                /(lmde)/gi,
+                /(emevia)/gi,
+                /(heyme)/gi,
+                /(mep)/gi,
+                /(mnh)/gi,
+                /(mutuelle[\s\-]?nationale[\s\-]?territoriale)/gi,
+                /(mnt)/gi,
+                /(mutuelle[\s\-]?integralis)/gi,
+                /(mutuelle[\s\-]?bleue)/gi,
+                /(mutuelle[\s\-]?verte)/gi,
+                /(apivia[\s\-]?mutuelle)/gi,
+                /(vyv)/gi,
+                /(eovi[\s\-]?mcd)/gi,
+                /(henner)/gi,
+                /(april)/gi,
+                /(swiss[\s\-]?life)/gi,
+                /(generali)/gi,
+                /(alptis)/gi,
+                /(ccmo[\s\-]?mutuelle)/gi,
+                /(mgc)/gi,
+                /(prevadies)/gi,
+                /(radiance[\s\-]?mutuelle)/gi,
+                /(solimut)/gi
             ];
             
             for (const pattern of mutuellePatterns) {
                 const match = text.match(pattern);
                 if (match) {
-                    data.mutuelle = match[match.length - 1].trim();
+                    data.mutuelle = match[0].trim();
+                    console.log("Mutuelle trouvée:", data.mutuelle);
                     break;
                 }
             }
             
-            // Si pas trouvé, chercher des patterns plus génériques
+            // Si pas trouvé, recherche plus large
             if (!data.mutuelle) {
-                const genericMatch = text.match(/([A-Z]{3,}\s+[A-Z]{3,})\s+(?:REMBOURSEMENT|PRESTATION)/i);
-                if (genericMatch) {
-                    data.mutuelle = genericMatch[1].trim();
+                // Chercher des mots-clés dans le texte
+                const keywords = ['MUTUELLE', 'MNT', 'MGEN', 'HARMONIE', 'GROUPAMA', 'MAAF', 'AXA', 'ALLIANZ'];
+                for (const keyword of keywords) {
+                    if (text.toUpperCase().includes(keyword)) {
+                        data.mutuelle = keyword;
+                        console.log("Mutuelle trouvée par mot-clé:", data.mutuelle);
+                        break;
+                    }
+                }
+            }
+            
+            // Fallback: chercher le premier mot en majuscules de plus de 3 lettres
+            if (!data.mutuelle) {
+                const fallbackMatch = text.match(/\b([A-Z]{4,})\b/);
+                if (fallbackMatch && !['DATE', 'EURO', 'REMB', 'SECU'].includes(fallbackMatch[1])) {
+                    data.mutuelle = fallbackMatch[1];
+                    console.log("Mutuelle trouvée par fallback:", data.mutuelle);
                 }
             }
 
