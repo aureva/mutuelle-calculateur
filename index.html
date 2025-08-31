@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; worker-src 'self' blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://YOUR_SUPABASE_URL.supabase.co; worker-src 'self' blob:;">
     <title>Mutuelle Calculateur</title>
     <style>
         * {
@@ -138,6 +138,14 @@
 
         .btn-download:hover {
             box-shadow: 0 8px 16px rgba(56, 178, 172, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 16px rgba(56, 161, 105, 0.3);
         }
 
         .loading {
@@ -378,6 +386,15 @@
             border-left: 4px solid #e53e3e;
         }
 
+        .success-message {
+            background: #c6f6d5;
+            color: #2d5016;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #48bb78;
+        }
+
         .privacy-notice {
             background: #e6fffa;
             color: #234e52;
@@ -426,6 +443,28 @@
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             margin-bottom: 20px;
+        }
+
+        .supabase-section {
+            background: #f0f8ff;
+            color: #1e3a8a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .config-form {
+            margin-bottom: 20px;
+        }
+
+        .config-form input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 10px;
         }
 
         @media (max-width: 1200px) {
@@ -517,8 +556,10 @@
             </div>
 
             <div id="confidentialityNotice" class="privacy-notice">
-                <strong>🔒 Confidentialité garantie :</strong> Vos données sont traitées localement dans votre navigateur. Aucune information n'est envoyée sur internet.
+                <strong>🔒 Confidentialité garantie :</strong> Vos documents sont traités localement dans votre navigateur. Aucune information personnelle n'est transmise.
             </div>
+
+
 
             <div id="descriptionNotice" class="privacy-notice" style="background: #e8f5e8; color: #2d5016; border-left-color: #68d391;">
                 <strong>🎯 À quoi sert ce calculateur ?</strong>
@@ -602,7 +643,9 @@
                     </div>
                     
                     <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn" onclick="resetApp()">Analyser un nouveau fichier</button>
+                        <button class="btn" onclick="resetApp()">
+                            🔄 Analyser un nouveau fichier
+                        </button>
                     </div>
                 </div>
             </div>
@@ -642,10 +685,124 @@
             originalWarn.apply(console, arguments);
         };
 
+        // Variables globales
         let analysisData = null;
         let cotisationsData = {};
         let currentSortOrder = 'desc';
         let charts = {};
+        let supabaseClient = null;
+
+        // Configuration Supabase fixe (remplacez par vos vraies valeurs)
+        const SUPABASE_CONFIG = {
+            url: 'https://YOUR_PROJECT_ID.supabase.co',
+            key: 'YOUR_ANON_KEY_HERE'
+        };
+
+        // Initialisation automatique de Supabase au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            initSupabase();
+        });
+
+        function initSupabase() {
+            try {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                script.onload = function() {
+                    if (window.supabase && SUPABASE_CONFIG.url && SUPABASE_CONFIG.key) {
+                        supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
+                        console.log('Supabase initialisé');
+                    }
+                };
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Erreur lors de l\'initialisation de Supabase:', error);
+            }
+        }
+
+        function checkConsentAndDownload() {
+            const consentCheckbox = document.getElementById('dataConsent');
+            
+            if (!consentCheckbox.checked) {
+                alert('⚠️ Vous devez accepter le partage anonyme des données pour télécharger le rapport complet.\n\nCela nous aide à améliorer le service pour tous les utilisateurs.');
+                consentCheckbox.focus();
+                return;
+            }
+
+            // Sauvegarder les données d'abord, puis télécharger
+            saveDataToSupabase().then(() => {
+                downloadAllChartsAsPDF();
+            }).catch((error) => {
+                console.error('Erreur lors de la sauvegarde:', error);
+                // Permettre le téléchargement même si la sauvegarde échoue
+                downloadAllChartsAsPDF();
+            });
+        }
+
+        // Structure des données pour Supabase
+        function prepareDataForSupabase() {
+            if (!analysisData || Object.keys(cotisationsData).length === 0) {
+                return null;
+            }
+
+            const dataToSave = {
+                mutuelle_name: analysisData.mutuelle || 'Non identifiée',
+                created_at: new Date().toISOString(),
+                years_data: {}
+            };
+
+            // Pour chaque année avec des données de cotisation
+            Object.keys(cotisationsData).forEach(year => {
+                const yearData = cotisationsData[year];
+                const analysisYearData = analysisData.totalByYear[year] || { mutuelle: 0, secu: 0 };
+                
+                // Compter le nombre de remboursements pour cette année
+                const reimbursementsThisYear = [
+                    ...analysisData.reimbursements,
+                    ...analysisData.pharmacyPayments
+                ].filter(item => item.date && item.date.endsWith('/' + year));
+
+                dataToSave.years_data[year] = {
+                    nombre_remboursements: reimbursementsThisYear.length,
+                    cotisation_personnelle: yearData.votreCotisationAnnuelle || 0,
+                    contribution_employeur: yearData.employeurAnnuel || 0,
+                    bilan: yearData.deficit || 0,
+                    total_remboursement_mutuelle: analysisYearData.mutuelle || 0,
+                    total_remboursement_secu: analysisYearData.secu || 0
+                };
+            });
+
+            return dataToSave;
+        }
+
+        async function saveDataToSupabase() {
+            if (!supabaseClient) {
+                console.warn('Supabase non initialisé');
+                return Promise.reject(new Error('Supabase non disponible'));
+            }
+
+            const dataToSave = prepareDataForSupabase();
+            if (!dataToSave) {
+                console.warn('Aucune donnée à sauvegarder');
+                return Promise.reject(new Error('Aucune donnée disponible'));
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('mutuelle_data')
+                    .insert([dataToSave]);
+
+                if (error) {
+                    throw error;
+                }
+
+                console.log('Données sauvegardées avec succès:', dataToSave);
+                return Promise.resolve(data);
+
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde:', error);
+                return Promise.reject(error);
+            }
+        }
 
         // Gestion du drag & drop
         function handleDragOver(e) {
@@ -900,9 +1057,9 @@
 
         function displayResults(data) {
             document.getElementById('uploadSection').style.display = 'none';
-            document.getElementById('instructionsNotice').style.display = 'none'; // Masquer les instructions
-            document.getElementById('descriptionNotice').style.display = 'none'; // Masquer la description
-            document.getElementById('confidentialityNotice').style.display = 'none'; // Masquer la confidentialité
+            document.getElementById('instructionsNotice').style.display = 'none';
+            document.getElementById('descriptionNotice').style.display = 'none';
+            document.getElementById('confidentialityNotice').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
 
             displayDetails(data);
@@ -973,7 +1130,7 @@
 
         function displayCotisations(data) {
             const cotisationsContent = document.getElementById('cotisationsContent');
-            const years = Object.keys(data.totalByYear).sort((a, b) => b - a); // Tri décroissant
+            const years = Object.keys(data.totalByYear).sort((a, b) => b - a);
             
             if (years.length === 0) return;
             
@@ -1095,7 +1252,7 @@
             
             const remboursementsRecus = analysisData.totalByYear[year] ? 
                 analysisData.totalByYear[year].mutuelle : 0;
-            const deficit = remboursementsRecus - votreCotisationAnnuelle; // Inversé: remboursements - cotisations
+            const deficit = remboursementsRecus - votreCotisationAnnuelle;
             
             // Mise à jour de l'affichage
             document.getElementById(`total-cotisation-${year}`).textContent = totalCotisationAnnuelle.toFixed(2) + '€';
@@ -1105,7 +1262,7 @@
             
             const deficitElement = document.getElementById(`deficit-${year}`);
             deficitElement.textContent = deficit.toFixed(2) + '€';
-            deficitElement.style.color = deficit > 0 ? '#38a169' : '#e53e3e'; // Inversé: positif = vert, négatif = rouge
+            deficitElement.style.color = deficit > 0 ? '#38a169' : '#e53e3e';
             
             // Sauvegarde des données
             cotisationsData[year] = {
@@ -1197,8 +1354,28 @@
                     </div>
                 </div>
                 
+                <!-- Section Consentement pour les statistiques -->
+                <div class="privacy-notice" style="background: #fff3cd; color: #856404; border-left-color: #ffc107; margin-bottom: 20px;">
+                    <h3>📊 Contribution aux statistiques anonymes</h3>
+                    <p>Pour améliorer notre service et fournir des analyses comparatives, nous collectons des données anonymisées :</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Nom de votre mutuelle</li>
+                        <li>Montants des cotisations et remboursements (sans dates ni détails personnels)</li>
+                        <li>Bilans financiers calculés</li>
+                    </ul>
+                    <p><strong>Aucune donnée personnelle identifiante n'est collectée.</strong></p>
+                    
+                    <label style="display: flex; align-items: center; margin-top: 15px; font-weight: bold; cursor: pointer;">
+                        <input type="checkbox" id="dataConsent" style="margin-right: 10px; transform: scale(1.2);">
+                        J'accepte le partage anonyme de mes données pour contribuer aux statistiques
+                    </label>
+                    <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
+                        ✅ Requis pour télécharger le rapport complet
+                    </p>
+                </div>
+                
                 <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn btn-download" onclick="downloadAllChartsAsPDF()">
+                    <button class="btn btn-download" onclick="checkConsentAndDownload()" id="downloadReportBtn">
                         📊 Télécharger le rapport complet
                     </button>
                 </div>
@@ -1288,7 +1465,6 @@
                                     const original = Chart.defaults.plugins.legend.labels.generateLabels;
                                     const labels = original.call(this, chart);
                                     return labels.map(label => {
-                                        // Raccourcir les textes pour qu'ils tiennent sur une ligne
                                         if (label.text === 'Cotisation annuelle (vous)') {
                                             label.text = 'Votre cotisation';
                                         }
@@ -1438,78 +1614,6 @@
             });
         }
 
-        // Fonction pour télécharger un graphique spécifique en PDF
-        async function downloadChartAsPDF(chartId, filename) {
-            try {
-                const canvas = document.getElementById(chartId);
-                if (!canvas) {
-                    showError('Graphique non trouvé');
-                    return;
-                }
-
-                // Créer une instance jsPDF
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-
-                // Créer un canvas temporaire avec une résolution plus élevée
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-                const pixelRatio = window.devicePixelRatio || 1;
-                const scaleFactor = 3; // Augmenter le facteur d'échelle
-                
-                tempCanvas.width = canvas.width * scaleFactor;
-                tempCanvas.height = canvas.height * scaleFactor;
-                tempCtx.scale(scaleFactor, scaleFactor);
-                
-                // Activer l'anticrénelage
-                tempCtx.imageSmoothingEnabled = true;
-                tempCtx.imageSmoothingQuality = 'high';
-                
-                // Ajouter un fond blanc
-                tempCtx.fillStyle = '#ffffff';
-                tempCtx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Redessiner le graphique
-                tempCtx.drawImage(canvas, 0, 0);
-                
-                // Obtenir l'image avec une qualité maximale
-                const imgData = tempCanvas.toDataURL('image/jpeg', 0.95);
-                
-                // Calculer les dimensions pour un graphique plus petit
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const imgWidth = Math.min(pdfWidth - 40, 180); // Largeur réduite à 180mm max
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                // Centrer l'image
-                const x = (pdfWidth - imgWidth) / 2;
-                const y = (pdfHeight - imgHeight) / 2;
-
-                // Ajouter un titre
-                pdf.setFontSize(16);
-                pdf.text('Analyse des Remboursements de Mutuelle', pdfWidth / 2, 15, { align: 'center' });
-                
-                // Ajouter la date
-                pdf.setFontSize(10);
-                pdf.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, pdfWidth / 2, 25, { align: 'center' });
-
-                // Ajouter l'image du graphique avec haute qualité et taille réduite
-                pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight);
-
-                // Télécharger le PDF
-                pdf.save(filename);
-                showDownloadSuccess();
-
-            } catch (error) {
-                showError('Erreur lors de la génération du PDF: ' + error.message);
-            }
-        }
-
-        // Fonction pour télécharger tous les graphiques en un seul PDF
         async function downloadAllChartsAsPDF() {
             try {
                 const { jsPDF } = window.jspdf;
@@ -1669,7 +1773,7 @@
                         const imgData = tempCanvas.toDataURL('image/jpeg', 0.95);
                         
                         // Dimensions plus petites pour les graphiques
-                        const maxWidth = Math.min(pdfWidth - 60, 130); // Largeur réduite à 130mm max
+                        const maxWidth = Math.min(pdfWidth - 60, 130);
                         const maxHeight = pdfHeight - 100;
                         
                         let imgWidth = maxWidth;
@@ -1755,10 +1859,16 @@
         function resetApp() {
             document.getElementById('resultsSection').style.display = 'none';
             document.getElementById('uploadSection').style.display = 'block';
-            document.getElementById('instructionsNotice').style.display = 'block'; // Réafficher les instructions
-            document.getElementById('descriptionNotice').style.display = 'block'; // Réafficher la description
-            document.getElementById('confidentialityNotice').style.display = 'block'; // Réafficher la confidentialité
+            document.getElementById('instructionsNotice').style.display = 'block';
+            document.getElementById('descriptionNotice').style.display = 'block';
+            document.getElementById('confidentialityNotice').style.display = 'block';
             document.getElementById('fileInput').value = '';
+            
+            // Réinitialiser le consentement (maintenant dans l'onglet Synthèse)
+            const consentCheckbox = document.getElementById('dataConsent');
+            if (consentCheckbox) {
+                consentCheckbox.checked = false;
+            }
             
             const errorMessage = document.getElementById('errorMessage');
             if (errorMessage) {
