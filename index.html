@@ -707,6 +707,7 @@
         async function analyzeDocument(text) {
             const data = {
                 beneficiary: '',
+                mutuelle: '',
                 period: '',
                 totalReimbursements: 0,
                 totalMutuelle: 0,
@@ -721,6 +722,85 @@
             const nameMatch = text.match(/([A-Z]+\s+[A-Z]+)\s+\d+\s+RUE/);
             if (nameMatch) {
                 data.beneficiary = nameMatch[1];
+            }
+
+            // Extraction du nom de la mutuelle
+            const mutuellePatterns = [
+                // Patterns génériques
+                /MUTUELLE\s+([A-Z\s]+)/i,
+                /MNT\s+([A-Z\s]+)/i,
+                /(MNT|MUTUELLE)\s*:\s*([A-Z\s]+)/i,
+                /([A-Z\s]{3,})\s+MUTUELLE/i,
+                /ORGANISME\s*:\s*([A-Z\s]+)/i,
+                
+                // Mutuelles spécifiques courantes
+                /(HARMONIE\s+MUTUELLE)/i,
+                /(MUTUELLE\s+GENERALE)/i,
+                /(MGEN)/i,
+                /(MAAF\s+SANTE)/i,
+                /(MALAKOFF\s+HUMANIS)/i,
+                /(ALLIANZ\s+SANTE)/i,
+                /(AXA\s+SANTE)/i,
+                /(GROUPAMA)/i,
+                /(MACIF\s+MUTUALITE)/i,
+                /(MATMUT)/i,
+                /(MAIF\s+SANTE)/i,
+                /(MUTEX)/i,
+                /(MYRIADE\s+MUTUELLE)/i,
+                /(ADREA\s+MUTUELLE)/i,
+                /(MUTUELLE\s+FAMILIALE)/i,
+                /(MUTUELLE\s+DES\s+MOTARDS)/i,
+                /(SMI)/i,
+                /(SMEBA)/i,
+                /(SMEREP)/i,
+                /(LMDE)/i,
+                /(EMEVIA)/i,
+                /(HEYME)/i,
+                /(MEP)/i,
+                /(MNH)/i,
+                /(MUTUELLE\s+NATIONALE\s+TERRITORIALE)/i,
+                /(MNT)/i,
+                /(MUTUELLE\s+INTEGRALIS)/i,
+                /(MUTUELLE\s+BLEUE)/i,
+                /(MUTUELLE\s+VERTE)/i,
+                /(MUTUELLE\s+DU\s+REMPART)/i,
+                /(APIVIA\s+MUTUELLE)/i,
+                /(VYV)/i,
+                /(EOVI\s+MCD)/i,
+                /(HENNER)/i,
+                /(APRIL)/i,
+                /(SWISS\s+LIFE)/i,
+                /(GENERALI)/i,
+                /(ALPTIS)/i,
+                /(CCMO\s+MUTUELLE)/i,
+                /(MGC)/i,
+                /(MUTUELLE\s+DU\s+MEDECIN)/i,
+                /(MUTUELLE\s+CENTRALE)/i,
+                /(PREVADIES)/i,
+                /(MUTEX\s+PRADO)/i,
+                /(RADIANCE\s+MUTUELLE)/i,
+                /(SOLIMUT)/i,
+                /(MUTUELLE\s+CHEMINOTS)/i,
+                /(MUTUELLE\s+CREDIT\s+AGRICOLE)/i,
+                /(MUTUELLE\s+SOCIETE\s+GENERALE)/i,
+                /(BNP\s+PARIBAS\s+CARDIF)/i,
+                /(CNP\s+ASSURANCES)/i
+            ];
+            
+            for (const pattern of mutuellePatterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    data.mutuelle = match[match.length - 1].trim();
+                    break;
+                }
+            }
+            
+            // Si pas trouvé, chercher des patterns plus génériques
+            if (!data.mutuelle) {
+                const genericMatch = text.match(/([A-Z]{3,}\s+[A-Z]{3,})\s+(?:REMBOURSEMENT|PRESTATION)/i);
+                if (genericMatch) {
+                    data.mutuelle = genericMatch[1].trim();
+                }
             }
 
             // Extraction de la période
@@ -1061,6 +1141,9 @@
             charts = {};
 
             analyticsContent.innerHTML = `
+                ${data.mutuelle ? `<div class="privacy-notice" style="background: #e8f5e8; color: #2d5016; border-left-color: #68d391; margin-bottom: 20px; text-align: center;">
+                    <strong>🏥 Mutuelle analysée : ${data.mutuelle}</strong>
+                </div>` : ''}
                 <div class="summary-cards">
                     <div class="summary-card">
                         <h3>Total Remboursements Mutuelle</h3>
@@ -1446,6 +1529,13 @@
                 
                 if (analysisData.period) {
                     pdf.text(`Période: ${analysisData.period}`, pdfWidth / 2, yPos, { align: 'center' });
+                    yPos += 10;
+                }
+                
+                if (analysisData.mutuelle) {
+                    pdf.text(`Mutuelle: ${analysisData.mutuelle}`, pdfWidth / 2, yPos, { align: 'center' });
+                    yPos += 20;
+                } else {
                     yPos += 20;
                 }
 
