@@ -966,10 +966,14 @@
             
             .tabs {
                 padding: 3px;
-                margin: 0 -5px 15px;
+                margin: 0 auto 15px;
                 overflow-x: scroll;
                 scrollbar-width: none;
                 -ms-overflow-style: none;
+                display: flex;
+                justify-content: center;
+                max-width: 90%;
+                width: 100%;
             }
             
             .tabs::-webkit-scrollbar {
@@ -978,8 +982,6 @@
             
             .tab {
                 flex: none;
-                min-width: 110px;
-                max-width: 130px;
                 padding: 12px 6px;
                 font-size: 0.8em;
                 margin: 0 1px;
@@ -988,6 +990,24 @@
                 word-break: break-word;
                 overflow: visible;
                 text-overflow: unset;
+            }
+            
+            .tab:nth-child(1) {
+                /* Remboursements - plus large */
+                min-width: 160px;
+                max-width: 160px;
+            }
+            
+            .tab:nth-child(2) {
+                /* Cotisations - taille normale */
+                min-width: 110px;
+                max-width: 110px;
+            }
+            
+            .tab:nth-child(3) {
+                /* Synthèse - taille normale */
+                min-width: 100px;
+                max-width: 100px;
             }
             
             .form-row {
