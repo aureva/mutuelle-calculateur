@@ -347,35 +347,47 @@
         .details-table {
             background: white;
             border-radius: 12px;
-            overflow-x: scroll;
-            overflow-y: visible;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             margin-bottom: 15px;
-            -webkit-overflow-scrolling: touch;
             position: relative;
         }
 
-        /* Force scrollbar visibility on mobile */
+        /* Table wrapper pour forcer le scroll sur mobile */
+        .table-wrapper {
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        /* Scrollbar visible sur mobile */
         @media (max-width: 767px) {
-            .details-table {
+            .table-wrapper {
                 scrollbar-width: auto;
-                scrollbar-color: #667eea #f1f1f1;
+                scrollbar-color: #667eea #e2e8f0;
+                border: 1px solid #e2e8f0;
             }
             
-            .details-table::-webkit-scrollbar {
-                height: 12px;
+            .table-wrapper::-webkit-scrollbar {
+                height: 14px;
                 -webkit-appearance: none;
             }
 
-            .details-table::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 6px;
+            .table-wrapper::-webkit-scrollbar-track {
+                background: #e2e8f0;
+                border-radius: 0 0 12px 12px;
             }
 
-            .details-table::-webkit-scrollbar-thumb {
+            .table-wrapper::-webkit-scrollbar-thumb {
                 background: #667eea;
-                border-radius: 6px;
-                border: 2px solid #f1f1f1;
+                border-radius: 7px;
+                border: 2px solid #e2e8f0;
+                min-width: 30px;
+            }
+
+            .table-wrapper::-webkit-scrollbar-thumb:active {
+                background: #5a67d8;
             }
         }
 
@@ -383,11 +395,11 @@
             .details-table {
                 border-radius: 15px;
                 box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-                overflow-x: visible;
             }
             
-            .details-table::-webkit-scrollbar {
-                display: none;
+            .table-wrapper {
+                overflow: visible;
+                border-radius: 15px;
             }
         }
 
@@ -419,24 +431,40 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85em;
-            min-width: 650px;
+            min-width: 700px;
+            background: white;
         }
 
         @media (max-width: 767px) {
             th {
-                padding: 10px 6px;
+                padding: 12px 8px;
                 font-size: 0.75em;
                 white-space: nowrap;
+                min-width: 80px;
+            }
+            
+            th:first-child {
+                min-width: 90px;
+            }
+            
+            th:nth-child(2),
+            th:nth-child(3) {
+                min-width: 140px;
+            }
+            
+            th:last-child {
+                min-width: 80px;
             }
             
             td {
-                padding: 8px 6px;
+                padding: 10px 8px;
                 font-size: 0.8em;
                 white-space: nowrap;
             }
             
             .amount-cell {
-                min-width: 70px;
+                min-width: 80px;
+                font-weight: 600;
             }
         }
 
@@ -2377,19 +2405,21 @@
                             <button class="btn btn-small" onclick="sortTable('asc')">↑ Croissant</button>
                             <button class="btn btn-small" onclick="sortTable('desc')">↓ Décroissant</button>
                         </div>
-                        <table id="detailsTable">
-                            <thead>
-                                <tr>
-                                    <th onclick="sortTable('date')">Date</th>
-                                    <th>Remboursements Sécurité Sociale</th>
-                                    <th>Remboursements Mutuelle</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Details will be inserted here -->
-                            </tbody>
-                        </table>
+                        <div class="table-wrapper">
+                            <table id="detailsTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable('date')">Date</th>
+                                        <th>Remboursements Sécurité Sociale</th>
+                                        <th>Remboursements Mutuelle</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Details will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     
                     <div style="text-align: center; margin-top: 20px;">
