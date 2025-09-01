@@ -347,31 +347,36 @@
         .details-table {
             background: white;
             border-radius: 12px;
-            overflow-x: auto;
+            overflow-x: scroll;
             overflow-y: visible;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             margin-bottom: 15px;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e0 #f7fafc;
+            position: relative;
         }
 
-        .details-table::-webkit-scrollbar {
-            height: 8px;
-        }
+        /* Force scrollbar visibility on mobile */
+        @media (max-width: 767px) {
+            .details-table {
+                scrollbar-width: auto;
+                scrollbar-color: #667eea #f1f1f1;
+            }
+            
+            .details-table::-webkit-scrollbar {
+                height: 12px;
+                -webkit-appearance: none;
+            }
 
-        .details-table::-webkit-scrollbar-track {
-            background: #f7fafc;
-            border-radius: 4px;
-        }
+            .details-table::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 6px;
+            }
 
-        .details-table::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 4px;
-        }
-
-        .details-table::-webkit-scrollbar-thumb:hover {
-            background: #a0aec0;
+            .details-table::-webkit-scrollbar-thumb {
+                background: #667eea;
+                border-radius: 6px;
+                border: 2px solid #f1f1f1;
+            }
         }
 
         @media (min-width: 768px) {
@@ -414,7 +419,25 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85em;
-            min-width: 600px;
+            min-width: 650px;
+        }
+
+        @media (max-width: 767px) {
+            th {
+                padding: 10px 6px;
+                font-size: 0.75em;
+                white-space: nowrap;
+            }
+            
+            td {
+                padding: 8px 6px;
+                font-size: 0.8em;
+                white-space: nowrap;
+            }
+            
+            .amount-cell {
+                min-width: 70px;
+            }
         }
 
         @media (min-width: 768px) {
@@ -927,13 +950,16 @@
             
             .tab {
                 flex: none;
-                min-width: 90px;
-                max-width: 120px;
-                padding: 12px 8px;
-                font-size: 0.75em;
+                min-width: 110px;
+                max-width: 130px;
+                padding: 12px 6px;
+                font-size: 0.8em;
                 margin: 0 1px;
-                text-overflow: ellipsis;
-                overflow: hidden;
+                white-space: normal;
+                line-height: 1.2;
+                word-break: break-word;
+                overflow: visible;
+                text-overflow: unset;
             }
             
             .form-row {
