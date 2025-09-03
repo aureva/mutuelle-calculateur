@@ -14,14 +14,12 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
             font-size: 16px;
             line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
@@ -68,10 +66,16 @@
 
         .header h1 {
             color: #4a5568;
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-size: 1.8em;
             margin-bottom: 8px;
             font-weight: 300;
-            word-break: break-word;
+        }
+
+        @media (min-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+                margin-bottom: 10px;
+            }
         }
 
         .header p {
@@ -347,59 +351,15 @@
         .details-table {
             background: white;
             border-radius: 12px;
+            overflow: hidden;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             margin-bottom: 15px;
-            position: relative;
-        }
-
-        /* Table wrapper pour forcer le scroll sur mobile */
-        .table-wrapper {
-            overflow-x: auto;
-            overflow-y: visible;
-            -webkit-overflow-scrolling: touch;
-            width: 100%;
-            border-radius: 12px;
-        }
-
-        /* Scrollbar visible sur mobile */
-        @media (max-width: 767px) {
-            .table-wrapper {
-                scrollbar-width: auto;
-                scrollbar-color: #667eea #e2e8f0;
-                border: 1px solid #e2e8f0;
-            }
-            
-            .table-wrapper::-webkit-scrollbar {
-                height: 14px;
-                -webkit-appearance: none;
-            }
-
-            .table-wrapper::-webkit-scrollbar-track {
-                background: #e2e8f0;
-                border-radius: 0 0 12px 12px;
-            }
-
-            .table-wrapper::-webkit-scrollbar-thumb {
-                background: #667eea;
-                border-radius: 7px;
-                border: 2px solid #e2e8f0;
-                min-width: 30px;
-            }
-
-            .table-wrapper::-webkit-scrollbar-thumb:active {
-                background: #5a67d8;
-            }
         }
 
         @media (min-width: 768px) {
             .details-table {
                 border-radius: 15px;
                 box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            }
-            
-            .table-wrapper {
-                overflow: visible;
-                border-radius: 15px;
             }
         }
 
@@ -431,47 +391,11 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85em;
-            min-width: 700px;
-            background: white;
-        }
-
-        @media (max-width: 767px) {
-            th {
-                padding: 12px 8px;
-                font-size: 0.75em;
-                white-space: nowrap;
-                min-width: 80px;
-            }
-            
-            th:first-child {
-                min-width: 90px;
-            }
-            
-            th:nth-child(2),
-            th:nth-child(3) {
-                min-width: 140px;
-            }
-            
-            th:last-child {
-                min-width: 80px;
-            }
-            
-            td {
-                padding: 10px 8px;
-                font-size: 0.8em;
-                white-space: nowrap;
-            }
-            
-            .amount-cell {
-                min-width: 80px;
-                font-weight: 600;
-            }
         }
 
         @media (min-width: 768px) {
             table {
                 font-size: 1em;
-                min-width: 100%;
             }
         }
 
@@ -974,16 +898,14 @@
             }
             
             .tabs {
-                padding: 8px;
+                padding: 3px;
                 margin: 0 auto 15px;
-                margin-left: 15px;
                 overflow-x: scroll;
                 scrollbar-width: none;
                 -ms-overflow-style: none;
                 display: flex;
                 justify-content: center;
-                max-width: 95%;
-                width: calc(100% - 15px);
+                max-width: 350px;
             }
             
             .tabs::-webkit-scrollbar {
@@ -992,33 +914,13 @@
             
             .tab {
                 flex: none;
-                padding: 12px 10px;
-                font-size: 0.8em;
-                margin: 0 2px;
-                white-space: normal;
-                line-height: 1.2;
-                word-break: break-word;
-                overflow: visible;
-                text-overflow: unset;
-                text-align: center;
-            }
-            
-            .tab:nth-child(1) {
-                /* Remboursements - plus large */
-                min-width: 160px;
-                max-width: 160px;
-            }
-            
-            .tab:nth-child(2) {
-                /* Cotisations - taille normale */
-                min-width: 110px;
-                max-width: 110px;
-            }
-            
-            .tab:nth-child(3) {
-                /* Synthèse - taille normale */
-                min-width: 100px;
-                max-width: 100px;
+                min-width: 90px;
+                max-width: 120px;
+                padding: 12px 8px;
+                font-size: 0.75em;
+                margin: 0 1px;
+                text-overflow: ellipsis;
+                overflow: hidden;
             }
             
             .form-row {
@@ -2079,7 +1981,7 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
 
@@ -2424,6 +2326,7 @@
                     <button class="tab active" onclick="switchTab('remboursements')">Remboursements</button>
                     <button class="tab" onclick="switchTab('cotisations')">Cotisations</button>
                     <button class="tab" onclick="switchTab('analytics')">Synthèse</button>
+                    <button class="tab" onclick="switchTab('debug')">Débogage</button>
                 </div>
 
                 <div id="remboursementsTab" class="tab-content active">
@@ -2436,27 +2339,19 @@
                             <button class="btn btn-small" onclick="sortTable('asc')">↑ Croissant</button>
                             <button class="btn btn-small" onclick="sortTable('desc')">↓ Décroissant</button>
                         </div>
-                        <div class="table-wrapper">
-                            <table id="detailsTable">
-                                <thead>
-                                    <tr>
-                                        <th onclick="sortTable('date')">Date</th>
-                                        <th>Remboursements Sécurité Sociale</th>
-                                        <th>Remboursements Mutuelle</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Details will be inserted here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn" onclick="resetApp()">
-                            🔄 Analyser un nouveau fichier
-                        </button>
+                        <table id="detailsTable">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortTable('date')">Date</th>
+                                    <th>Remboursements Sécurité Sociale</th>
+                                    <th>Remboursements Mutuelle</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Details will be inserted here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -2475,6 +2370,22 @@
                         <button class="btn" onclick="resetApp()">
                             🔄 Analyser un nouveau fichier
                         </button>
+                    </div>
+                </div>
+
+                <div id="debugTab" class="tab-content">
+                    <div class="debug-section">
+                        <h4>Texte extrait du PDF :</h4>
+                        <div id="extractedText" class="debug-content">
+                            <!-- Extracted text will appear here -->
+                        </div>
+                    </div>
+                    
+                    <div class="debug-section" style="margin-top: 15px;">
+                        <h4>Données analysées :</h4>
+                        <div id="analyzedData" class="debug-content">
+                            <!-- Analyzed data will appear here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2536,6 +2447,7 @@
         let currentSortOrder = 'desc';
         let charts = {};
         let supabaseClient = null;
+        let extractedTextForDebug = '';
 
         // Configuration Supabase fixe
         const SUPABASE_CONFIG = {
@@ -2672,6 +2584,7 @@
             
             try {
                 const text = await extractTextFromPDF(file);
+                extractedTextForDebug = text; // Store for debugging
                 analysisData = await analyzeDocument(text);
                 displayResults(analysisData);
             } catch (error) {
@@ -2820,36 +2733,6 @@
 
             // Universal table extraction - improved regex patterns
             const tablePatterns = [
-                // Minimal format (only amounts, no dates)
-                {
-                    name: 'Minimal Format',
-                    pattern: /([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€/g,
-                    fields: ['depense', 'remboursement_total', 'reste_charge']
-                },
-                // Narrative format with "Votre dépense du"
-                {
-                    name: 'Narrative Depense',
-                    pattern: /Votre\s+dépense\s+du\s+(\d{2}\/\d{2}\/\d{4})\s+pour\s+([^(]+)\s*\(([\d,]+)\s*€\)[^€]*?(?:prise\s+en\s+charge|remboursée)\s+à\s+hauteur\s+de\s+([\d,]+)\s*€\s+par\s+la\s+Sécurité\s+sociale\s+et\s+de\s+([\d,]+)\s*€\s+par\s+votre\s+complémentaire/g,
-                    fields: ['date', 'description', 'montant_total', 'remb_ss', 'remb_complementaire']
-                },
-                // Multi-beneficiary format (simple remb total)
-                {
-                    name: 'Multi-Beneficiary',
-                    pattern: /(\d{2}\/\d{2}\/\d{4})\s+([A-Za-zÀ-ÿ\s\d]+)\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€/g,
-                    fields: ['date', 'acte', 'montant', 'remb_total', 'reste_charge']
-                },
-                // Malakoff Humanis format (reverse column order)
-                {
-                    name: 'Malakoff Humanis',
-                    pattern: /([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([\d,]+)\s*€\s+([A-Za-zÀ-ÿ\s]+)\s+(\d{2}\/\d{2}\/\d{4})/g,
-                    fields: ['reste_charge', 'montant_total', 'remb_mutuelle', 'remb_ss', 'base_ss', 'libelle', 'date']
-                },
-                // Allianz format (narrative style)
-                {
-                    name: 'Allianz Narrative',
-                    pattern: /([A-Za-zÀ-ÿ\s]+)\s+du\s+(\d{2}\/\d{2}\/\d{4})[^€]*?Dépense\s*:\s*([\d,]+)\s*€[^€]*?Remboursé\s+SS\s*:\s*([\d,]+)\s*€[^€]*?Complémentaire\s*:\s*([\d,]+)\s*€[^€]*?Reste\s+à\s+charge\s*:\s*([\d,]+)\s*€/g,
-                    fields: ['type', 'date', 'depense', 'remb_ss', 'complementaire', 'reste_charge']
-                },
                 // Harmonie Mutuelle format
                 {
                     name: 'Harmonie Mutuelle',
@@ -3097,9 +2980,17 @@
             document.getElementById('confidentialityNotice').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
 
+            // Update debug information
+            updateDebugInfo();
+
             displayDetails(data);
             displayCotisations(data);
             displayAnalytics(data);
+        }
+
+        function updateDebugInfo() {
+            document.getElementById('extractedText').textContent = extractedTextForDebug.substring(0, 5000) + (extractedTextForDebug.length > 5000 ? '...\n[Texte tronqué]' : '');
+            document.getElementById('analyzedData').textContent = JSON.stringify(analysisData, null, 2);
         }
 
         function displayDetails(data) {
@@ -3876,6 +3767,11 @@
                 setTimeout(() => {
                     displayAnalytics(analysisData);
                 }, 100);
+            }
+
+            // Si on bascule vers l'onglet debug, mettre à jour les infos
+            if (tabName === 'debug' && analysisData) {
+                updateDebugInfo();
             }
         }
 
