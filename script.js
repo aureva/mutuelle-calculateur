@@ -32,7 +32,6 @@
         let currentSortOrder = 'desc';
         let charts = {};
         let supabaseClient = null;
-        let extractedTextForDebug = '';
 
         // Configuration Supabase fixe
         const SUPABASE_CONFIG = {
@@ -169,7 +168,6 @@
             
             try {
                 const text = await extractTextFromPDF(file);
-                extractedTextForDebug = text; // Store for debugging
                 analysisData = await analyzeDocument(text);
                 displayResults(analysisData);
             } catch (error) {
@@ -565,17 +563,9 @@
             document.getElementById('confidentialityNotice').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
 
-            // Update debug information
-            updateDebugInfo();
-
             displayDetails(data);
             displayCotisations(data);
             displayAnalytics(data);
-        }
-
-        function updateDebugInfo() {
-            document.getElementById('extractedText').textContent = extractedTextForDebug.substring(0, 5000) + (extractedTextForDebug.length > 5000 ? '...\n[Texte tronqué]' : '');
-            document.getElementById('analyzedData').textContent = JSON.stringify(analysisData, null, 2);
         }
 
         function displayDetails(data) {
@@ -1352,11 +1342,6 @@
                 setTimeout(() => {
                     displayAnalytics(analysisData);
                 }, 100);
-            }
-
-            // Si on bascule vers l'onglet debug, mettre à jour les infos
-            if (tabName === 'debug' && analysisData) {
-                updateDebugInfo();
             }
         }
 
