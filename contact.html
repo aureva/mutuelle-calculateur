@@ -1,178 +1,190 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Contact - Mutuelle Calculateur</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            padding: 40px;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .back-link:hover {
-            text-decoration: underline;
-        }
-        h1 {
-            color: #4a5568;
-            font-size: 2em;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        .subtitle {
-            text-align: center;
-            color: #718096;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #4a5568;
-        }
-        input[type="text"],
-        input[type="email"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-            font-family: inherit;
-            box-sizing: border-box;
-        }
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            width: 100%;
-            margin-top: 10px;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-        .info-box {
-            background: #e6fffa;
-            color: #234e52;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border-left: 4px solid #38b2ac;
-        }
-        .warning-box {
-            background: #fef3c7;
-            color: #92400e;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border-left: 4px solid #f59e0b;
-            font-size: 14px;
-        }
-        .response-time {
-            text-align: center;
-            color: #718096;
-            font-size: 14px;
-            margin-top: 15px;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        color: #4a5568;
+        font-size: 2em;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+      .subtitle {
+        text-align: center;
+        color: #718096;
+        margin-bottom: 30px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #4a5568;
+      }
+      input[type="text"],
+      input[type="email"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+        font-family: inherit;
+        box-sizing: border-box;
+      }
+      input[type="text"]:focus,
+      input[type="email"]:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 10px;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      }
+      .info-box {
+        background: #e6fffa;
+        color: #234e52;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        border-left: 4px solid #38b2ac;
+      }
+      .warning-box {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+        border-left: 4px solid #f59e0b;
+        font-size: 14px;
+      }
+      .response-time {
+        text-align: center;
+        color: #718096;
+        font-size: 14px;
+        margin-top: 15px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <a href="index.html" class="back-link">← Retour à Mutuelle Calculateur</a>
-        
-        <h1>Contact</h1>
-        <p class="subtitle">Besoin d'aide ? Une question ? Contactez-nous !</p>
-        
-        <div class="info-box">
-            <strong>Avant de nous écrire :</strong>
-            <br>• Vérifiez que votre PDF est bien lisible et de bonne qualité
-            <br>• Assurez-vous d'avoir testé avec plusieurs documents
-            <br>• Consultez les pages d'aide et FAQ si disponibles
+      <a href="index.html" class="back-link">← Retour à Mutuelle Calculateur</a>
+
+      <h1>Contact</h1>
+      <p class="subtitle">Besoin d'aide ? Une question ? Contactez-nous !</p>
+
+      <div class="info-box">
+        <strong>Avant de nous écrire :</strong>
+        <br />• Vérifiez que votre PDF est bien lisible et de bonne qualité
+        <br />• Assurez-vous d'avoir testé avec plusieurs documents <br />•
+        Consultez les pages d'aide et FAQ si disponibles
+      </div>
+
+      <form action="https://formspree.io/f/meolabdz" method="POST">
+        <div class="form-group">
+          <label for="name">Nom / Prénom *</label>
+          <input type="text" id="name" name="name" required />
         </div>
-        
-        <form action="https://formspree.io/f/meolabdz" method="POST">
-            <div class="form-group">
-                <label for="name">Nom / Prénom *</label>
-                <input type="text" id="name" name="name" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="email">Email *</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="subject">Sujet *</label>
-                <select id="subject" name="subject" required>
-                    <option value="">Choisissez un sujet</option>
-                    <option value="bug">Bug / Problème technique</option>
-                    <option value="feature">Suggestion d'amélioration</option>
-                    <option value="help">Demande d'aide</option>
-                    <option value="legal">Question juridique / CGU</option>
-                    <option value="other">Autre</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="message">Message *</label>
-                <textarea id="message" name="message" placeholder="Décrivez votre problème ou question en détail..." required></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="browser">Navigateur utilisé (optionnel)</label>
-                <input type="text" id="browser" name="browser" placeholder="Ex: Chrome 120, Firefox 119, Safari 17...">
-            </div>
-            
-            <button type="submit" class="btn">Envoyer le message</button>
-        </form>
-        
-        <p class="response-time">⏱️ Délai de réponse habituel : 24-48h</p>
-        
-        <div class="warning-box">
-            <strong>Important :</strong> Ne joignez jamais vos documents de mutuelle originaux à vos messages. Ils contiennent des données sensibles. Décrivez seulement le problème rencontré.
+
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input type="email" id="email" name="email" required />
         </div>
+
+        <div class="form-group">
+          <label for="subject">Sujet *</label>
+          <select id="subject" name="subject" required>
+            <option value="">Choisissez un sujet</option>
+            <option value="bug">Bug / Problème technique</option>
+            <option value="feature">Suggestion d'amélioration</option>
+            <option value="help">Demande d'aide</option>
+            <option value="legal">Question juridique / CGU</option>
+            <option value="other">Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="message">Message *</label>
+          <textarea
+            id="message"
+            name="message"
+            placeholder="Décrivez votre problème ou question en détail..."
+            required
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="browser">Navigateur utilisé (optionnel)</label>
+          <input
+            type="text"
+            id="browser"
+            name="browser"
+            placeholder="Ex: Chrome 120, Firefox 119, Safari 17..."
+          />
+        </div>
+
+        <button type="submit" class="btn">Envoyer le message</button>
+      </form>
+
+      <p class="response-time">⏱️ Délai de réponse habituel : 24-48h</p>
+
+      <div class="warning-box">
+        <strong>Important :</strong> Ne joignez jamais vos documents de mutuelle
+        originaux à vos messages. Ils contiennent des données sensibles.
+        Décrivez seulement le problème rencontré.
+      </div>
     </div>
-</body>
+  </body>
 </html>

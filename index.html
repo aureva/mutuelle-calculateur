@@ -1,122 +1,256 @@
 <!DOCTYPE html>
 
 <html lang="fr">
-<head>
-<meta charset="utf-8"/>
-<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://ztzutnphaugpnbwhczvq.supabase.co; worker-src 'self' blob:;" http-equiv="Content-Security-Policy"/>
-<title>Mutuelle Calculateur</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta
+      content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:;"
+      http-equiv="Content-Security-Policy"
+    />
+    <title>Mutuelle Calculateur</title>
 
-<link href="style.css" rel="stylesheet"/></head>
-<body>
-<div class="container">
-<div class="card">
-<div class="header">
-<h1>🏥 Mutuelle Calculateur</h1>
-<p>Calculez et analysez vos remboursements de mutuelle en toute confidentialité</p>
-</div>
-<div class="privacy-notice" id="confidentialityNotice">
-<strong>🔒 Confidentialité garantie :</strong> Vos documents sont traités localement dans votre navigateur. Aucune information personnelle n'est transmise.
+    <link href="style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="header">
+          <h1>🏥 Mutuelle Calculateur</h1>
+          <p>
+            Calculez et analysez vos remboursements de mutuelle en toute
+            confidentialité
+          </p>
+        </div>
+        <div class="privacy-notice" id="confidentialityNotice">
+          <strong>🔒 Confidentialité garantie :</strong> Vos documents sont
+          traités localement dans votre navigateur. Aucune information
+          personnelle n'est transmise.
+        </div>
+        <div
+          class="privacy-notice"
+          id="descriptionNotice"
+          style="
+            background: #e8f5e8;
+            color: #2d5016;
+            border-left-color: #68d391;
+          "
+        >
+          <strong>🎯 À quoi sert ce calculateur ?</strong>
+          <div style="margin-top: 10px">
+            Cette application calcule et analyse vos relevés de mutuelle pour
+            déterminer automatiquement si votre mutuelle vous fait gagner ou
+            perdre de l'argent. Elle compare vos cotisations annuelles avec les
+            remboursements reçus pour vous donner un verdict clair :
+            <strong>Êtes-vous gagnant ou perdant avec votre mutuelle ?</strong>
+          </div>
+          <div style="margin-top: 10px">
+            L'outil génère des graphiques détaillés, calcule vos déficits ou
+            bénéfices par année, et vous aide à prendre des décisions éclairées
+            sur votre couverture santé.
+          </div>
+        </div>
+        <div
+          class="privacy-notice"
+          id="instructionsNotice"
+          style="
+            background: #fff3cd;
+            color: #856404;
+            border-left-color: #ffc107;
+          "
+        >
+          <strong>📋 Mode d'emploi :</strong>
+          <div style="margin-top: 10px">
+            <div>
+              <strong>Étape 1 :</strong> Connectez-vous sur votre espace
+              mutuelle
             </div>
-<div class="privacy-notice" id="descriptionNotice" style="background: #e8f5e8; color: #2d5016; border-left-color: #68d391;">
-<strong>🎯 À quoi sert ce calculateur ?</strong>
-<div style="margin-top: 10px;">
-                    Cette application calcule et analyse vos relevés de mutuelle pour déterminer automatiquement si votre mutuelle vous fait gagner ou perdre de l'argent. Elle compare vos cotisations annuelles avec les remboursements reçus pour vous donner un verdict clair : <strong>Êtes-vous gagnant ou perdant avec votre mutuelle ?</strong>
-</div>
-<div style="margin-top: 10px;">
-                    L'outil génère des graphiques détaillés, calcule vos déficits ou bénéfices par année, et vous aide à prendre des décisions éclairées sur votre couverture santé.
-                </div>
-</div>
-<div class="privacy-notice" id="instructionsNotice" style="background: #fff3cd; color: #856404; border-left-color: #ffc107;">
-<strong>📋 Mode d'emploi :</strong>
-<div style="margin-top: 10px;">
-<div><strong>Étape 1 :</strong> Connectez-vous sur votre espace mutuelle</div>
-<div style="margin-top: 5px;"><strong>Étape 2 :</strong> Téléchargez tous vos remboursements et prestations versées directement aux professionnels de santé</div>
-<div style="margin-top: 5px;"><strong>Étape 3 :</strong> Glissez votre relevé mutuelle ci-dessous</div>
-</div>
-</div>
-<div class="upload-section" id="uploadSection">
-<div class="upload-zone" onclick="document.getElementById('fileInput').click()" ondragleave="handleDragLeave(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
-<div class="upload-icon">📄</div>
-<div class="upload-text">Glissez votre relevé de mutuelle ici</div>
-<div class="upload-subtext">ou cliquez pour sélectionner un fichier PDF</div>
-</div>
-<input accept=".pdf" id="fileInput" onchange="handleFileSelect(event)" type="file"/>
-<button class="btn" onclick="document.getElementById('fileInput').click()">
-                    Choisir un fichier
+            <div style="margin-top: 5px">
+              <strong>Étape 2 :</strong> Téléchargez tous vos remboursements et
+              prestations versées directement aux professionnels de santé
+            </div>
+            <div style="margin-top: 5px">
+              <strong>Étape 3 :</strong> Glissez votre relevé mutuelle
+              ci-dessous
+            </div>
+          </div>
+        </div>
+        <div class="upload-section" id="uploadSection">
+          <div
+            class="upload-zone"
+            onclick="document.getElementById('fileInput').click()"
+            ondragleave="handleDragLeave(event)"
+            ondragover="handleDragOver(event)"
+            ondrop="handleDrop(event)"
+          >
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Glissez votre relevé de mutuelle ici</div>
+            <div class="upload-subtext">
+              ou cliquez pour sélectionner un fichier PDF
+            </div>
+          </div>
+          <input
+            accept=".pdf"
+            id="fileInput"
+            onchange="handleFileSelect(event)"
+            type="file"
+          />
+          <button
+            class="btn"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            Choisir un fichier
+          </button>
+        </div>
+        <div class="loading" id="loadingSection">
+          <div class="spinner"></div>
+          <p>Analyse du document en cours...</p>
+        </div>
+        <div class="results-section" id="resultsSection">
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('remboursements')">
+              Remboursements
+            </button>
+            <button class="tab" onclick="switchTab('cotisations')">
+              Cotisations
+            </button>
+            <button class="tab" onclick="switchTab('analytics')">
+              Synthèse
+            </button>
+          </div>
+          <div class="tab-content active" id="remboursementsTab">
+            <div class="privacy-notice" style="margin-bottom: 20px">
+              <strong>ℹ️ Information importante :</strong> Les remboursements
+              incluent aussi les prestations payées aux Professionnels de Santé
+              si elles sont présentes sur le document fourni.
+            </div>
+            <div class="details-table">
+              <div class="table-controls">
+                <label>Trier par date :</label>
+                <button class="btn btn-small" onclick="sortTable('asc')">
+                  ↑ Croissant
                 </button>
-</div>
-<div class="loading" id="loadingSection">
-<div class="spinner"></div>
-<p>Analyse du document en cours...</p>
-</div>
-<div class="results-section" id="resultsSection">
-<div class="tabs">
-<button class="tab active" onclick="switchTab('remboursements')">Remboursements</button>
-<button class="tab" onclick="switchTab('cotisations')">Cotisations</button>
-<button class="tab" onclick="switchTab('analytics')">Synthèse</button>
-</div>
-<div class="tab-content active" id="remboursementsTab">
-<div class="privacy-notice" style="margin-bottom: 20px;">
-<strong>ℹ️ Information importante :</strong> Les remboursements incluent aussi les prestations payées aux Professionnels de Santé si elles sont présentes sur le document fourni.
-                    </div>
-<div class="details-table">
-<div class="table-controls">
-<label>Trier par date :</label>
-<button class="btn btn-small" onclick="sortTable('asc')">↑ Croissant</button>
-<button class="btn btn-small" onclick="sortTable('desc')">↓ Décroissant</button>
-</div>
-<table id="detailsTable">
-<thead>
-<tr>
-<th onclick="sortTable('date')">Date</th>
-<th>Remboursements Sécurité Sociale</th>
-<th>Remboursements Mutuelle</th>
-<th>Total</th>
-</tr>
-</thead>
-<tbody>
-<!-- Details will be inserted here -->
-</tbody>
-</table>
-</div>
-</div>
-<div class="tab-content" id="cotisationsTab">
-<div id="cotisationsContent">
-<!-- Cotisations form will be inserted here -->
-</div>
-</div>
-<div class="tab-content" id="analyticsTab">
-<div id="analyticsContent">
-<!-- Analytics will be inserted here -->
-</div>
-<div style="text-align: center; margin-top: 20px;">
-<button class="btn" onclick="resetApp()">
-                            🔄 Analyser un nouveau fichier
-                        </button>
-</div>
-</div>
-</div>
-<div class="download-status" id="downloadStatus">
-                PDF généré avec succès !
+                <button class="btn btn-small" onclick="sortTable('desc')">
+                  ↓ Décroissant
+                </button>
+              </div>
+              <table id="detailsTable">
+                <thead>
+                  <tr>
+                    <th onclick="sortTable('date')">Date</th>
+                    <th>Remboursements Sécurité Sociale</th>
+                    <th>Remboursements Mutuelle</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Details will be inserted here -->
+                </tbody>
+              </table>
             </div>
-</div>
-<footer style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 15px; backdrop-filter: blur(10px);">
-<div style="color: rgba(255,255,255,0.9); font-size: 14px;">
-<a href="mentions.html" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onmouseover="this.style.background='rgba(255,255,255,0.2)'" style="color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 10px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; transition: all 0.3s ease;">Mentions légales</a>
-<span style="color: rgba(255,255,255,0.5);">|</span>
-<a href="confidentialite.html" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onmouseover="this.style.background='rgba(255,255,255,0.2)'" style="color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 10px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; transition: all 0.3s ease;">Confidentialité</a>
-<span style="color: rgba(255,255,255,0.5);">|</span>
-<a href="cgu.html" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onmouseover="this.style.background='rgba(255,255,255,0.2)'" style="color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 10px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; transition: all 0.3s ease;">CGU</a>
-<span style="color: rgba(255,255,255,0.5);">|</span>
-<a href="contact.html" onmouseout="this.style.background='rgba(255,255,255,0.1)'" onmouseover="this.style.background='rgba(255,255,255,0.2)'" style="color: rgba(255,255,255,0.9); text-decoration: none; margin: 0 10px; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; transition: all 0.3s ease;">Contact</a>
-</div>
-</footer>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+          </div>
+          <div class="tab-content" id="cotisationsTab">
+            <div id="cotisationsContent">
+              <!-- Cotisations form will be inserted here -->
+            </div>
+          </div>
+          <div class="tab-content" id="analyticsTab">
+            <div id="analyticsContent">
+              <!-- Analytics will be inserted here -->
+            </div>
+            <div style="text-align: center; margin-top: 20px">
+              <button class="btn" onclick="resetApp()">
+                🔄 Analyser un nouveau fichier
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="download-status" id="downloadStatus">
+          PDF généré avec succès !
+        </div>
+      </div>
+      <footer
+        style="
+          text-align: center;
+          margin-top: 40px;
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 15px;
+          backdrop-filter: blur(10px);
+        "
+      >
+        <div style="color: rgba(255, 255, 255, 0.9); font-size: 14px">
+          <a
+            href="mentions.html"
+            onmouseout="this.style.background='rgba(255,255,255,0.1)'"
+            onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+            style="
+              color: rgba(255, 255, 255, 0.9);
+              text-decoration: none;
+              margin: 0 10px;
+              padding: 8px 12px;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 5px;
+              transition: all 0.3s ease;
+            "
+            >Mentions légales</a
+          >
+          <span style="color: rgba(255, 255, 255, 0.5)">|</span>
+          <a
+            href="confidentialite.html"
+            onmouseout="this.style.background='rgba(255,255,255,0.1)'"
+            onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+            style="
+              color: rgba(255, 255, 255, 0.9);
+              text-decoration: none;
+              margin: 0 10px;
+              padding: 8px 12px;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 5px;
+              transition: all 0.3s ease;
+            "
+            >Confidentialité</a
+          >
+          <span style="color: rgba(255, 255, 255, 0.5)">|</span>
+          <a
+            href="cgu.html"
+            onmouseout="this.style.background='rgba(255,255,255,0.1)'"
+            onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+            style="
+              color: rgba(255, 255, 255, 0.9);
+              text-decoration: none;
+              margin: 0 10px;
+              padding: 8px 12px;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 5px;
+              transition: all 0.3s ease;
+            "
+            >CGU</a
+          >
+          <span style="color: rgba(255, 255, 255, 0.5)">|</span>
+          <a
+            href="contact.html"
+            onmouseout="this.style.background='rgba(255,255,255,0.1)'"
+            onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+            style="
+              color: rgba(255, 255, 255, 0.9);
+              text-decoration: none;
+              margin: 0 10px;
+              padding: 8px 12px;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 5px;
+              transition: all 0.3s ease;
+            "
+            >Contact</a
+          >
+        </div>
+      </footer>
+    </div>
+    <script src="libs/pdf.js/pdf.min.js"></script>
+    <script src="libs/chart.js/chart.min.js"></script>
+    <script src="libs/jspdf/jspdf.umd.min.js"></script>
 
-<script src="script.js"></script></body>
+    <script src="script.js"></script>
+  </body>
 </html>
