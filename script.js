@@ -703,6 +703,43 @@ function displayCotisations(data) {
                     <div class="privacy-notice" style="background: #f0f8ff; color: #1e3a8a; border-left-color: #3b82f6; margin-top: 20px;">
                         <strong>📊 Note sur le bilan :</strong> Un bilan positif indique un bénéfice (vous récupérez plus que ce que vous payez), un bilan négatif indique un déficit (vous payez plus que ce que vous récupérez).
                     </div>
+
+                    <div class="privacy-notice" style="background: #f0fff0; color: #155724; border-left-color: #28a745; margin-top: 15px;">
+                        <strong>📈 Taux de redistribution :</strong>
+                        <div style="margin-top: 8px;">
+                            Deux taux de redistribution sont calculés pour vous donner une vision complète :
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <strong>1. Taux de redistribution (votre part) :</strong>
+                            <br>
+                            • <strong>Formule :</strong> (Total remboursements ÷ Votre cotisation annuelle) × 100
+                            <br>
+                            • Indique le pourcentage de <strong>votre cotisation personnelle</strong> (hors part employeur) qui vous est redistribué
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <strong>2. Taux de redistribution (global) :</strong>
+                            <br>
+                            • <strong>Formule :</strong> (Total remboursements ÷ Total cotisation annuelle) × 100
+                            <br>
+                            • Indique le pourcentage de la <strong>cotisation totale</strong> (incluant la part employeur) qui vous est redistribué
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <strong>Interprétation :</strong>
+                            <br>
+                            • <strong>≥ 100% :</strong> Vous récupérez plus que ce que vous payez
+                            <br>
+                            • <strong>&lt; 100% :</strong> Vous récupérez moins que votre cotisation
+                        </div>
+                        <div style="margin-top: 8px; padding: 8px; background: rgba(59, 130, 246, 0.1); border-radius: 4px;">
+                            <strong>📊 Référence nationale :</strong>
+                            <br>
+                            Selon la Direction de la recherche, des études, de l'évaluation et des statistiques (DREES), le taux de redistribution moyen des complémentaires santé en France est de <strong>71% TTC</strong> (données 2022).
+                            <br>
+                            <a href="https://drees.solidarites-sante.gouv.fr/sites/default/files/2024-07/CS24%20-%20Fiche%2008%20-%20Ressources,%20charges%20et%20rentabilit%C3%A9%20de%20l%E2%80%99activit%C3%A9%20des%20compl%C3%A9mentaires%20sant%C3%A9.pdf#:~:text=Les%20assur%C3%A9s%2C%20quant%20%C3%A0%20eux%2C,de%20cotisations%20TTC%20dans%20le" target="_blank" style="color: #3b82f6; text-decoration: underline; font-size: 0.9em;">
+                                Source : DREES - Fiche 08 - Complémentaires santé 2024
+                            </a>
+                        </div>
+                    </div>
                     
                     <div class="privacy-notice" style="background: #fef3c7; color: #92400e; border-left-color: #f59e0b; margin-top: 15px;">
                         <strong>⚠️ Avertissement :</strong> Les résultats sont indicatifs et fournis à titre informatif uniquement. Vérifiez toujours les calculs avec vos documents officiels. L'éditeur ne saurait être tenu responsable d'erreurs de calcul.
@@ -808,6 +845,36 @@ function displayYearContent(year, data) {
                                 }
                             </span>
                         </div>
+                        <div class="calc-row">
+                            <span>Taux de redistribution (votre part) :</span>
+                            <span id="taux-${year}" style="color: ${
+    cotisationsData[year] && cotisationsData[year].tauxRedistribution >= 100
+      ? "#38a169"
+      : "#e53e3e"
+  }">
+                                ${
+                                  cotisationsData[year]
+                                    ? cotisationsData[year].tauxRedistribution.toFixed(1) +
+                                      "%"
+                                    : "0.0%"
+                                }
+                            </span>
+                        </div>
+                        <div class="calc-row">
+                            <span>Taux de redistribution (global) :</span>
+                            <span id="taux-global-${year}" style="color: ${
+    cotisationsData[year] && cotisationsData[year].tauxRedistributionGlobal >= 100
+      ? "#38a169"
+      : "#e53e3e"
+  }">
+                                ${
+                                  cotisationsData[year]
+                                    ? cotisationsData[year].tauxRedistributionGlobal.toFixed(1) +
+                                      "%"
+                                    : "0.0%"
+                                }
+                            </span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -829,6 +896,16 @@ function calculateCotisations(year) {
     : 0;
   const deficit = remboursementsRecus - votreCotisationAnnuelle;
 
+  // Calcul du taux de redistribution (en excluant la part employeur)
+  const tauxRedistribution = votreCotisationAnnuelle > 0
+    ? (remboursementsRecus / votreCotisationAnnuelle) * 100
+    : 0;
+
+  // Calcul du taux de redistribution global (incluant la part employeur)
+  const tauxRedistributionGlobal = totalCotisationAnnuelle > 0
+    ? (remboursementsRecus / totalCotisationAnnuelle) * 100
+    : 0;
+
   // Mise à jour de l'affichage
   document.getElementById(`total-cotisation-${year}`).textContent =
     totalCotisationAnnuelle.toFixed(2) + "€";
@@ -843,6 +920,14 @@ function calculateCotisations(year) {
   deficitElement.textContent = deficit.toFixed(2) + "€";
   deficitElement.style.color = deficit > 0 ? "#38a169" : "#e53e3e";
 
+  const tauxElement = document.getElementById(`taux-${year}`);
+  tauxElement.textContent = tauxRedistribution.toFixed(1) + "%";
+  tauxElement.style.color = tauxRedistribution >= 100 ? "#38a169" : "#e53e3e";
+
+  const tauxGlobalElement = document.getElementById(`taux-global-${year}`);
+  tauxGlobalElement.textContent = tauxRedistributionGlobal.toFixed(1) + "%";
+  tauxGlobalElement.style.color = tauxRedistributionGlobal >= 100 ? "#38a169" : "#e53e3e";
+
   // Sauvegarde des données
   cotisationsData[year] = {
     cotisationMensuelle: totalCotisationMensuelle,
@@ -852,6 +937,8 @@ function calculateCotisations(year) {
     totalCotisationAnnuelle: totalCotisationAnnuelle,
     remboursementsRecus: remboursementsRecus,
     deficit: deficit,
+    tauxRedistribution: tauxRedistribution,
+    tauxRedistributionGlobal: tauxRedistributionGlobal,
   };
 }
 
@@ -865,19 +952,22 @@ function displayAnalytics(data) {
     totalItems > 0 ? data.totalMutuelle / totalItems : 0;
   const avgSecuReimbursement = totalItems > 0 ? data.totalSecu / totalItems : 0;
 
-  // Calcul du déficit total et moyen
+  // Calcul du déficit total et moyen + taux de redistribution moyen
   const years = Object.keys(data.totalByYear).sort();
   let totalDeficit = 0;
+  let totalTauxRedistribution = 0;
   let yearsWithData = 0;
 
   years.forEach((year) => {
-    if (cotisationsData[year] && cotisationsData[year].deficit) {
+    if (cotisationsData[year] && cotisationsData[year].deficit !== undefined) {
       totalDeficit += cotisationsData[year].deficit;
+      totalTauxRedistribution += cotisationsData[year].tauxRedistribution || 0;
       yearsWithData++;
     }
   });
 
   const avgDeficit = yearsWithData > 0 ? totalDeficit / yearsWithData : 0;
+  const avgTauxRedistribution = yearsWithData > 0 ? totalTauxRedistribution / yearsWithData : 0;
 
   // Destruction des anciens graphiques
   Object.values(charts).forEach((chart) => {
@@ -932,20 +1022,41 @@ function displayAnalytics(data) {
                           2
                         )}€</div>
                     </div>
+                    <div class="summary-card">
+                        <h3>Taux de redistribution moyen</h3>
+                        <div class="amount" style="color: ${
+                          avgTauxRedistribution >= 100 ? "#38a169" : "#e53e3e"
+                        }">${avgTauxRedistribution.toFixed(1)}%</div>
+                    </div>
                 </div>
                 
                 <div class="chart-grid">
                     <div class="chart-container">
                         <div class="chart-header">
-                            <h3 class="chart-title">📊 Analyse financière par année</h3>
+                            <h3 class="chart-title">💰 Remboursements par année</h3>
                         </div>
-                        <canvas id="yearlyChart"></canvas>
+                        <canvas id="reimbursementsChart"></canvas>
                     </div>
                     <div class="chart-container">
                         <div class="chart-header">
-                            <h3 class="chart-title">🥧 Répartition Mutuelle vs Sécurité Sociale</h3>
+                            <h3 class="chart-title">💸 Cotisations vs Remboursements</h3>
                         </div>
-                        <canvas id="pieChart"></canvas>
+                        <canvas id="cotisationsChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">📈 Bilan par année</h3>
+                        </div>
+                        <canvas id="bilanChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">📊 Taux de redistribution par année</h3>
+                        </div>
+                        <canvas id="tauxChart"></canvas>
                     </div>
                 </div>
                 
@@ -978,29 +1089,23 @@ function displayAnalytics(data) {
 
   // Créer les graphiques après l'insertion du HTML
   setTimeout(() => {
-    createYearlyChart(data);
-    createPieChart(data);
+    createReimbursementsChart(data);
+    createCotisationsChart(data);
+    createBilanChart(data);
+    createTauxChart(data);
   }, 100);
 }
 
-function createYearlyChart(data) {
-  const ctx = document.getElementById("yearlyChart");
+// Chart 1: Remboursements Mutuelle et Sécu par année
+function createReimbursementsChart(data) {
+  const ctx = document.getElementById("reimbursementsChart");
   if (!ctx) return;
 
   const years = Object.keys(data.totalByYear).sort();
   const mutuelleData = years.map((year) => data.totalByYear[year].mutuelle);
   const secuData = years.map((year) => data.totalByYear[year].secu);
 
-  const yourCotisationsData = years.map((year) => {
-    return cotisationsData[year]
-      ? cotisationsData[year].votreCotisationAnnuelle
-      : 0;
-  });
-  const deficitData = years.map((year) => {
-    return cotisationsData[year] ? cotisationsData[year].deficit : 0;
-  });
-
-  charts.yearly = new Chart(ctx, {
+  charts.reimbursements = new Chart(ctx, {
     type: "bar",
     data: {
       labels: years,
@@ -1021,22 +1126,6 @@ function createYearlyChart(data) {
           borderWidth: 2,
           borderRadius: 8,
         },
-        {
-          label: "Cotisation annuelle (vous)",
-          data: yourCotisationsData,
-          backgroundColor: "rgba(255, 159, 64, 0.8)",
-          borderColor: "rgba(255, 159, 64, 1)",
-          borderWidth: 2,
-          borderRadius: 8,
-        },
-        {
-          label: "Bilan",
-          data: deficitData,
-          backgroundColor: "rgba(255, 99, 132, 0.8)",
-          borderColor: "rgba(255, 99, 132, 1)",
-          borderWidth: 2,
-          borderRadius: 8,
-        },
       ],
     },
     options: {
@@ -1045,7 +1134,7 @@ function createYearlyChart(data) {
       layout: {
         padding: {
           top: 20,
-          bottom: 50,
+          bottom: 20,
           left: 20,
           right: 20,
         },
@@ -1053,26 +1142,12 @@ function createYearlyChart(data) {
       plugins: {
         legend: {
           position: "top",
-          align: "center",
-          maxWidth: 800,
           labels: {
             usePointStyle: true,
             padding: 15,
             font: {
-              size: 13,
+              size: 15,
               weight: "500",
-            },
-            boxWidth: 10,
-            generateLabels: function (chart) {
-              const original =
-                Chart.defaults.plugins.legend.labels.generateLabels;
-              const labels = original.call(this, chart);
-              return labels.map((label) => {
-                if (label.text === "Cotisation annuelle (vous)") {
-                  label.text = "Votre cotisation";
-                }
-                return label;
-              });
             },
           },
         },
@@ -1085,9 +1160,7 @@ function createYearlyChart(data) {
           cornerRadius: 8,
           callbacks: {
             label: function (context) {
-              return (
-                context.dataset.label + ": " + context.parsed.y.toFixed(2) + "€"
-              );
+              return context.dataset.label + ": " + context.parsed.y.toFixed(2) + "€";
             },
           },
         },
@@ -1098,13 +1171,9 @@ function createYearlyChart(data) {
             display: false,
           },
           ticks: {
-            maxRotation: 0,
-            minRotation: 0,
             font: {
               size: 14,
-              weight: "500",
             },
-            padding: 10,
           },
         },
         y: {
@@ -1114,12 +1183,11 @@ function createYearlyChart(data) {
           },
           ticks: {
             font: {
-              size: 12,
+              size: 13,
             },
             callback: function (value) {
               return value.toFixed(0) + "€";
             },
-            padding: 8,
           },
         },
       },
@@ -1131,28 +1199,59 @@ function createYearlyChart(data) {
   });
 }
 
-function createPieChart(data) {
-  const ctx = document.getElementById("pieChart");
+// Chart 2: Cotisations vs Remboursements
+function createCotisationsChart(data) {
+  const ctx = document.getElementById("cotisationsChart");
   if (!ctx) return;
 
-  charts.pie = new Chart(ctx, {
-    type: "doughnut",
+  const years = Object.keys(data.totalByYear).sort();
+  const mutuelleData = years.map((year) => data.totalByYear[year].mutuelle);
+  const totalCotisationsData = years.map((year) => {
+    return cotisationsData[year] ? cotisationsData[year].totalCotisationAnnuelle : 0;
+  });
+  const employeurData = years.map((year) => {
+    return cotisationsData[year] ? cotisationsData[year].employeurAnnuel : 0;
+  });
+  const votreCotisationData = years.map((year) => {
+    return cotisationsData[year] ? cotisationsData[year].votreCotisationAnnuelle : 0;
+  });
+
+  charts.cotisations = new Chart(ctx, {
+    type: "bar",
     data: {
-      labels: ["Mutuelle", "Sécurité Sociale"],
+      labels: years,
       datasets: [
         {
-          data: [data.totalMutuelle, data.totalSecu],
-          backgroundColor: [
-            "rgba(102, 126, 234, 0.8)",
-            "rgba(56, 178, 172, 0.8)",
-          ],
-          borderColor: ["rgba(102, 126, 234, 1)", "rgba(56, 178, 172, 1)"],
-          borderWidth: 3,
-          hoverBackgroundColor: [
-            "rgba(102, 126, 234, 0.9)",
-            "rgba(56, 178, 172, 0.9)",
-          ],
-          cutout: "50%",
+          label: "Remboursement Mutuelle",
+          data: mutuelleData,
+          backgroundColor: "rgba(34, 197, 94, 0.8)",
+          borderColor: "rgba(34, 197, 94, 1)",
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+        {
+          label: "Cotisation totale",
+          data: totalCotisationsData,
+          backgroundColor: "rgba(59, 130, 246, 0.8)",
+          borderColor: "rgba(59, 130, 246, 1)",
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+        {
+          label: "Contribution employeur",
+          data: employeurData,
+          backgroundColor: "rgba(168, 85, 247, 0.8)",
+          borderColor: "rgba(168, 85, 247, 1)",
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+        {
+          label: "Votre cotisation",
+          data: votreCotisationData,
+          backgroundColor: "rgba(239, 68, 68, 0.8)",
+          borderColor: "rgba(239, 68, 68, 1)",
+          borderWidth: 2,
+          borderRadius: 8,
         },
       ],
     },
@@ -1161,37 +1260,21 @@ function createPieChart(data) {
       maintainAspectRatio: false,
       layout: {
         padding: {
-          top: 30,
-          bottom: 80,
-          left: 30,
-          right: 30,
+          top: 20,
+          bottom: 20,
+          left: 20,
+          right: 20,
         },
       },
       plugins: {
         legend: {
-          position: "bottom",
+          position: "top",
           labels: {
             usePointStyle: true,
-            padding: 25,
+            padding: 15,
             font: {
-              size: 14,
+              size: 15,
               weight: "500",
-            },
-            boxWidth: 18,
-            generateLabels: function (chart) {
-              const data = chart.data;
-              const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
-              return data.labels.map((label, index) => {
-                const value = data.datasets[0].data[index];
-                const percentage =
-                  total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
-                return {
-                  text: `${label}: ${value.toFixed(2)}€ (${percentage}%)`,
-                  fillStyle: data.datasets[0].backgroundColor[index],
-                  hidden: false,
-                  index: index,
-                };
-              });
             },
           },
         },
@@ -1204,28 +1287,283 @@ function createPieChart(data) {
           cornerRadius: 8,
           callbacks: {
             label: function (context) {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage =
-                total > 0 ? ((context.parsed / total) * 100).toFixed(1) : "0.0";
-              return (
-                context.label +
-                ": " +
-                context.parsed.toFixed(2) +
-                "€ (" +
-                percentage +
-                "%)"
-              );
+              return context.dataset.label + ": " + context.parsed.y.toFixed(2) + "€";
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            font: {
+              size: 14,
+            },
+          },
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: "rgba(0, 0, 0, 0.1)",
+          },
+          ticks: {
+            font: {
+              size: 13,
+            },
+            callback: function (value) {
+              return value.toFixed(0) + "€";
             },
           },
         },
       },
       animation: {
-        duration: 1500,
+        duration: 1000,
         easing: "easeOutQuart",
       },
     },
   });
 }
+
+// Chart 3: Bilan par année
+function createBilanChart(data) {
+  const ctx = document.getElementById("bilanChart");
+  if (!ctx) return;
+
+  const years = Object.keys(data.totalByYear).sort();
+  const bilanData = years.map((year) => {
+    return cotisationsData[year] ? cotisationsData[year].deficit : 0;
+  });
+
+  // Séparer les données positives et négatives
+  const bilanPositif = bilanData.map(value => value >= 0 ? value : null);
+  const bilanNegatif = bilanData.map(value => value < 0 ? value : null);
+
+  charts.bilan = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: "Bilan positif (bénéfice)",
+          data: bilanPositif,
+          backgroundColor: "rgba(34, 197, 94, 0.8)",
+          borderColor: "rgba(34, 197, 94, 1)",
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+        {
+          label: "Bilan négatif (déficit)",
+          data: bilanNegatif,
+          backgroundColor: "rgba(239, 68, 68, 0.8)",
+          borderColor: "rgba(239, 68, 68, 1)",
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: 20,
+          bottom: 20,
+          left: 20,
+          right: 20,
+        },
+      },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            usePointStyle: true,
+            padding: 15,
+            font: {
+              size: 15,
+              weight: "500",
+            },
+          },
+        },
+        tooltip: {
+          backgroundColor: "rgba(0, 0, 0, 0.8)",
+          titleColor: "white",
+          bodyColor: "white",
+          borderColor: "rgba(102, 126, 234, 0.5)",
+          borderWidth: 1,
+          cornerRadius: 8,
+          callbacks: {
+            label: function (context) {
+              const value = context.parsed.y;
+              if (value === null) return null;
+              return context.dataset.label + ": " + value.toFixed(2) + "€";
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            font: {
+              size: 14,
+            },
+          },
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: "rgba(0, 0, 0, 0.1)",
+          },
+          ticks: {
+            font: {
+              size: 13,
+            },
+            callback: function (value) {
+              return value.toFixed(0) + "€";
+            },
+          },
+        },
+      },
+      animation: {
+        duration: 1000,
+        easing: "easeOutQuart",
+      },
+    },
+  });
+}
+
+// Chart 4: Taux de redistribution par année
+function createTauxChart(data) {
+  const ctx = document.getElementById("tauxChart");
+  if (!ctx) return;
+
+  const years = Object.keys(data.totalByYear).sort();
+  const tauxPersonnelData = years.map((year) => {
+    return cotisationsData[year] ? cotisationsData[year].tauxRedistribution : 0;
+  });
+  const tauxGlobalData = years.map((year) => {
+    return cotisationsData[year] ? cotisationsData[year].tauxRedistributionGlobal : 0;
+  });
+
+  charts.taux = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: "Taux personnel (%)",
+          data: tauxPersonnelData,
+          backgroundColor: "rgba(34, 197, 94, 0.2)",
+          borderColor: "rgba(34, 197, 94, 1)",
+          borderWidth: 3,
+          fill: false,
+          pointBackgroundColor: "rgba(34, 197, 94, 1)",
+          pointBorderColor: "rgba(255, 255, 255, 1)",
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          tension: 0.4,
+        },
+        {
+          label: "Taux global (%)",
+          data: tauxGlobalData,
+          backgroundColor: "rgba(59, 130, 246, 0.2)",
+          borderColor: "rgba(59, 130, 246, 1)",
+          borderWidth: 3,
+          fill: false,
+          pointBackgroundColor: "rgba(59, 130, 246, 1)",
+          pointBorderColor: "rgba(255, 255, 255, 1)",
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          tension: 0.4,
+        },
+        {
+          label: "Référence DREES (71%)",
+          data: years.map(() => 71),
+          backgroundColor: "rgba(156, 163, 175, 0.2)",
+          borderColor: "rgba(156, 163, 175, 1)",
+          borderWidth: 2,
+          borderDash: [5, 5],
+          fill: false,
+          pointRadius: 0,
+          tension: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: 20,
+          bottom: 20,
+          left: 20,
+          right: 20,
+        },
+      },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            usePointStyle: true,
+            padding: 15,
+            font: {
+              size: 15,
+              weight: "500",
+            },
+          },
+        },
+        tooltip: {
+          backgroundColor: "rgba(0, 0, 0, 0.8)",
+          titleColor: "white",
+          bodyColor: "white",
+          borderColor: "rgba(102, 126, 234, 0.5)",
+          borderWidth: 1,
+          cornerRadius: 8,
+          callbacks: {
+            label: function (context) {
+              return context.dataset.label + ": " + context.parsed.y.toFixed(1) + "%";
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            font: {
+              size: 14,
+            },
+          },
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: "rgba(0, 0, 0, 0.1)",
+          },
+          ticks: {
+            font: {
+              size: 13,
+            },
+            callback: function (value) {
+              return value.toFixed(0) + "%";
+            },
+          },
+        },
+      },
+      animation: {
+        duration: 1000,
+        easing: "easeOutQuart",
+      },
+    },
+  });
+}
+
 
 async function downloadAllChartsAsPDF() {
   try {
@@ -1286,16 +1624,19 @@ async function downloadAllChartsAsPDF() {
 
     const years = Object.keys(analysisData.totalByYear).sort();
     let totalDeficit = 0;
+    let totalTauxRedistribution = 0;
     let yearsWithData = 0;
 
     years.forEach((year) => {
-      if (cotisationsData[year] && cotisationsData[year].deficit) {
+      if (cotisationsData[year] && cotisationsData[year].deficit !== undefined) {
         totalDeficit += cotisationsData[year].deficit;
+        totalTauxRedistribution += cotisationsData[year].tauxRedistribution || 0;
         yearsWithData++;
       }
     });
 
     const avgDeficit = yearsWithData > 0 ? totalDeficit / yearsWithData : 0;
+    const avgTauxRedistribution = yearsWithData > 0 ? totalTauxRedistribution / yearsWithData : 0;
 
     pdf.setFontSize(14);
     pdf.text("Synthèse Financière", 20, yPos);
@@ -1341,7 +1682,52 @@ async function downloadAllChartsAsPDF() {
       20,
       yPos
     );
-    yPos += 20;
+    yPos += 8;
+    // Calcul du taux de redistribution global moyen
+    let totalTauxRedistributionGlobal = 0;
+    let yearsWithGlobalData = 0;
+
+    years.forEach((year) => {
+      if (cotisationsData[year] && cotisationsData[year].tauxRedistributionGlobal) {
+        totalTauxRedistributionGlobal += cotisationsData[year].tauxRedistributionGlobal || 0;
+        yearsWithGlobalData++;
+      }
+    });
+
+    const avgTauxRedistributionGlobal = yearsWithGlobalData > 0 ? totalTauxRedistributionGlobal / yearsWithGlobalData : 0;
+
+    pdf.text(
+      `Taux de redistribution personnel moyen: ${avgTauxRedistribution.toFixed(1)}%`,
+      20,
+      yPos
+    );
+    yPos += 8;
+    pdf.text(
+      `Taux de redistribution global moyen: ${avgTauxRedistributionGlobal.toFixed(1)}%`,
+      20,
+      yPos
+    );
+    yPos += 8;
+    pdf.setFontSize(9);
+    pdf.text(
+      "(Taux personnel = Remboursements / Votre cotisation * 100)",
+      20,
+      yPos
+    );
+    yPos += 5;
+    pdf.text(
+      "(Taux global = Remboursements / Cotisation totale * 100)",
+      20,
+      yPos
+    );
+    yPos += 5;
+    pdf.text(
+      "Référence DREES: 71% TTC (moyenne nationale 2022)",
+      20,
+      yPos
+    );
+    yPos += 15;
+    pdf.setFontSize(11);
 
     // Tableau des cotisations
     if (Object.keys(cotisationsData).length > 0) {
@@ -1350,21 +1736,23 @@ async function downloadAllChartsAsPDF() {
       yPos += 15;
 
       // En-têtes du tableau
-      pdf.setFontSize(9);
-      const colWidths = [20, 30, 35, 30, 35, 35];
-      const colPositions = [20, 40, 70, 105, 135, 170];
+      pdf.setFontSize(8);
+      const colWidths = [12, 18, 18, 20, 20, 18, 15, 15];
+      const colPositions = [20, 32, 50, 68, 88, 108, 126, 141];
       const headers = [
         "Année",
-        "Cotisation/mois",
-        "Employeur/mois",
+        "Cotis/mois",
+        "Employ/mois",
         "Votre part/an",
-        "Remboursements/an",
+        "Rembours/an",
         "Bilan/an",
+        "Taux pers.",
+        "Taux glob.",
       ];
 
       // Dessiner les en-têtes
       pdf.setFillColor(102, 126, 234);
-      pdf.rect(20, yPos - 5, 170, 8, "F");
+      pdf.rect(20, yPos - 5, 136, 8, "F");
       pdf.setTextColor(255, 255, 255);
       headers.forEach((header, i) => {
         pdf.text(header, colPositions[i] + 2, yPos, {
@@ -1382,17 +1770,19 @@ async function downloadAllChartsAsPDF() {
           const data = cotisationsData[year];
           const rowData = [
             year,
-            `${data.cotisationMensuelle.toFixed(2)}€`,
-            `${data.employeurMensuel.toFixed(2)}€`,
-            `${data.votreCotisationAnnuelle.toFixed(2)}€`,
-            `${data.remboursementsRecus.toFixed(2)}€`,
-            `${data.deficit.toFixed(2)}€`,
+            `${data.cotisationMensuelle.toFixed(0)}€`,
+            `${data.employeurMensuel.toFixed(0)}€`,
+            `${data.votreCotisationAnnuelle.toFixed(0)}€`,
+            `${data.remboursementsRecus.toFixed(0)}€`,
+            `${data.deficit.toFixed(0)}€`,
+            `${(data.tauxRedistribution || 0).toFixed(1)}%`,
+            `${(data.tauxRedistributionGlobal || 0).toFixed(1)}%`,
           ];
 
           // Alterner les couleurs de fond
           if (index % 2 === 0) {
             pdf.setFillColor(245, 245, 245);
-            pdf.rect(20, yPos - 5, 170, 8, "F");
+            pdf.rect(20, yPos - 5, 136, 8, "F");
           }
 
           rowData.forEach((cell, i) => {
@@ -1406,10 +1796,12 @@ async function downloadAllChartsAsPDF() {
     }
 
     // Ajouter les graphiques avec taille réduite
-    const chartIds = ["yearlyChart", "pieChart"];
+    const chartIds = ["reimbursementsChart", "cotisationsChart", "bilanChart", "tauxChart"];
     const chartTitles = [
-      "Analyse financière par année",
-      "Répartition Mutuelle vs Sécurité Sociale",
+      "Remboursements par année",
+      "Cotisations vs Remboursements",
+      "Bilan par année",
+      "Taux de redistribution par année",
     ];
 
     for (let i = 0; i < chartIds.length; i++) {
